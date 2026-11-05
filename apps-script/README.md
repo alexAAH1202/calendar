@@ -21,7 +21,9 @@ no such limit, so the wall keeps showing new events without anyone touching it. 
    - Open **Execution log**: it shows `Bridge key: …`. Copy the key (64 letters and numbers).
 4. Click **Deploy > New deployment**. Gear icon > **Web app**.
    - Execute as: **Me**
-   - Who has access: **Anyone**
+   - Who has access: **Anyone** (not "Anyone with Google account" or "Only myself": with those, Google answers
+     the wall with a sign-in page and the connection fails). Check: the web app URL opened in a private window
+     shows `{"ok":true,…}`.
    - Click **Deploy** and copy the **Web app URL** (it ends in `/exec`).
 5. On the wall tablet or a parent's phone: **Parent > Calendar**, paste the URL and the key, **Connect**.
    Tick the calendars to show, give each a short name (for example your first names and "Family"),

@@ -71,9 +71,9 @@ To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>
 
 ## Phase 4: not tested yet
 
-- **Against real Google.** Everything above ran against fake Google services; this workspace cannot reach
-  `calendar.google.com` or `script.google.com`. The redirect behaviour was copied from how Apps Script web apps
-  are known to answer.
+- Connecting to the real Apps Script works on the family's tablet (once the deployment was open to "Anyone").
+  Adding an event and seeing a Google-side event on the wall within 15 minutes still need checking on real Google;
+  the automated tests use fake Google services because this workspace cannot reach Google.
 - That Google's iCal address really is blocked in the tablet's browser (assumed, not checked).
 - Events in other time zones, recurring events (Apps Script returns each occurrence, untested), and calendars
   with hundreds of events.
