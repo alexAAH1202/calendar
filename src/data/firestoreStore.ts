@@ -62,6 +62,10 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
       const { id, ...data } = person;
       setDoc(familyDoc('people', id), data).catch(reportError);
     },
+    async updatePerson(personId, changes) {
+      // merge: true merges nested maps too, so { sensory: { textSize } } keeps the other settings.
+      setDoc(familyDoc('people', personId), changes, { merge: true }).catch(reportError);
+    },
     async deletePerson(personId, routineIds) {
       const batch = writeBatch(db);
       routineIds.forEach((rid) => batch.delete(familyDoc('routines', rid)));
@@ -79,6 +83,20 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
     },
     async deleteTemplate(id) {
       deleteDoc(familyDoc('templates', id)).catch(reportError);
+    },
+    watchDoc(path, cb) {
+      return onSnapshot(familyDoc(...path), (snap) => cb(snap.data() as never));
+    },
+    async putDoc(path, data, merge = false) {
+      setDoc(familyDoc(...path), data, { merge }).catch(reportError);
+    },
+    watchCollection(path, cb) {
+      return onSnapshot(collection(db, 'families', familyId, ...path), (snap) =>
+        cb(snap.docs.map((d) => ({ ...d.data(), id: d.id })) as never),
+      );
+    },
+    async removeDoc(path) {
+      deleteDoc(familyDoc(...path)).catch(reportError);
     },
     onWriteError(cb) {
       errorListeners.add(cb);

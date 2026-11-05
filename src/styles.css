@@ -393,3 +393,83 @@ h1 { font-size: 40px; margin: 0; font-weight: 600; }
   .tab { padding: 0 14px; font-size: 18px; }
   .child-board { grid-template-columns: 1fr !important; }
 }
+
+/* Phase 4: calendar */
+.today-layout { display: grid; grid-template-columns: minmax(320px, 440px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.today-panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.today-panel h2 { font-size: 32px; margin: 0; }
+.today-panel h3 { font-size: 24px; margin: 8px 0 0; color: var(--muted); }
+.events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.event {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-left: 8px solid var(--cal);
+  border-radius: 10px;
+  background: var(--bg);
+  min-width: 0;
+}
+.event-time { font-size: 20px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.event-title { font-size: 26px; overflow-wrap: break-word; }
+.event-meta { font-size: 18px; color: var(--muted); }
+.event--compact { padding: 6px 10px; border-left-width: 6px; }
+.event--compact .event-time { font-size: 16px; }
+.event--compact .event-title { font-size: 20px; }
+.cal-status { font-size: 16px; color: var(--muted); margin: 4px 0 0; }
+.hint--small { font-size: 18px; }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+.week-day { background: var(--surface); border-radius: var(--radius); padding: 12px; min-height: 240px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.week-day h3 { margin: 0; font-size: 22px; font-weight: 600; }
+.week-dow { color: var(--muted); }
+.week-day.is-today { outline: 3px solid var(--text); }
+.week-title { margin: 0; font-size: 24px; }
+
+.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.month-dow { font-size: 18px; color: var(--muted); padding: 0 6px; }
+.month-day { background: var(--surface); border-radius: 10px; padding: 6px 8px; min-height: 120px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.month-day.is-other { opacity: 0.55; }
+.month-day.is-today { outline: 3px solid var(--text); }
+.month-date { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.month-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.month-events li { font-size: 15px; border-left: 4px solid var(--cal); padding-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.month-events .month-more { border-left-color: transparent; color: var(--muted); }
+
+.setup-form, .event-form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.setup-form label, .event-form > label { font-size: 18px; color: var(--muted); }
+.setup-form input, .event-form input, .event-form select, .cal-options input {
+  min-height: var(--touch);
+  font-size: 22px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 2px solid #9aa7b1;
+  background: #fff;
+  min-width: 0;
+}
+.event-form .btn--primary, .setup-form .btn--primary { align-self: flex-start; }
+.event-when { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--gap); }
+.inline-field { display: flex; flex-direction: column; gap: 4px; font-size: 18px; color: var(--muted); }
+.check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--touch); font-size: 20px; }
+.check input { width: 28px; height: 28px; }
+.cal-choices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--gap); width: 100%; }
+.cal-choice { background: #fff; border-radius: 12px; border-left: 8px solid #9aa7b1; padding: 8px 16px; }
+.cal-options { display: flex; flex-direction: column; gap: 4px; padding-left: 38px; }
+.panel-text { margin: 0; font-size: 18px; color: var(--muted); }
+.panel code { font-size: 16px; }
+@media (max-width: 900px) {
+  .today-layout { grid-template-columns: 1fr; }
+  .week { grid-template-columns: 1fr; }
+  .week-day { min-height: 0; }
+  .month-day { min-height: 64px; padding: 4px; }
+  .month-events li { font-size: 12px; }
+}
+.month-title { font-size: 28px; margin: 0 0 8px; }

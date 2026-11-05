@@ -58,6 +58,15 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     notify(key, true);
   };
 
+  const savePerson = async (person: Person) => {
+    if (!storage.getItem(PREFIX + 'people:init')) {
+      // The first save makes the example child a real, stored person.
+      storage.setItem(PREFIX + 'people:init', '1');
+      if (person.id !== SEED_CHILD.id) storage.setItem(PREFIX + `people/${SEED_CHILD.id}`, JSON.stringify(SEED_CHILD));
+    }
+    await write(`people/${person.id}`, person);
+  };
+
   const dayPath = (day: string, pid: string) => `days/${dayDocId(day, pid)}`;
 
   return {
@@ -91,12 +100,12 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
       emit();
       return watchPrefix('people', emit);
     },
-    async savePerson(person) {
-      if (!storage.getItem(PREFIX + 'people:init')) {
-        storage.setItem(PREFIX + 'people:init', '1');
-        if (person.id !== SEED_CHILD.id) storage.setItem(PREFIX + `people/${SEED_CHILD.id}`, JSON.stringify(SEED_CHILD));
-      }
-      await write(`people/${person.id}`, person);
+    savePerson,
+    async updatePerson(personId, changes) {
+      const prev = read<Person>(`people/${personId}`) ?? (personId === SEED_CHILD.id ? SEED_CHILD : undefined);
+      if (!prev) return;
+      const next = { ...prev, ...changes, sensory: { ...prev.sensory, ...changes.sensory } };
+      await savePerson(next);
     },
     async deletePerson(personId, routineIds) {
       storage.setItem(PREFIX + 'people:init', '1');
@@ -113,6 +122,35 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     },
     async deleteTemplate(id) {
       remove(`templates/${id}`);
+    },
+    watchDoc(path, cb) {
+      const key = path.join('/');
+      const emit = () => cb(read(key));
+      emit();
+      return watch(key, emit);
+    },
+    async putDoc(path, data, merge = false) {
+      const key = path.join('/');
+      await write(key, merge ? { ...(read<object>(key) ?? {}), ...data } : data);
+    },
+    watchCollection(path, cb) {
+      const prefix = path.join('/') + '/';
+      const emit = () => {
+        const docs: { id: string }[] = [];
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i);
+          if (!k?.startsWith(PREFIX + prefix)) continue;
+          const id = k.slice(PREFIX.length + prefix.length);
+          const v = id && !id.includes('/') ? read<object>(prefix + id) : undefined;
+          if (v) docs.push({ ...v, id });
+        }
+        cb(docs as never);
+      };
+      emit();
+      return watchPrefix(prefix, emit);
+    },
+    async removeDoc(path) {
+      remove(path.join('/'));
     },
     onWriteError() {
       return () => {};

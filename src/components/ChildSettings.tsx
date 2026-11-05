@@ -9,23 +9,24 @@ import { Tabs } from './Tabs';
 interface Props {
   person: Person;
   canDelete: boolean;
-  onSave: (person: Person) => void;
+  /** Saves only the fields given. */
+  onChange: (changes: Partial<Omit<Person, 'id'>>) => void;
   onDelete: () => void;
 }
 
 /** Name, symbol, colour and sensory profile for one child. Each change saves at once. */
-export function ChildSettings({ person, canDelete, onSave, onDelete }: Props) {
+export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) {
   const profile = profileOf(person);
   const [name, setName] = useState(person.name);
   const [picking, setPicking] = useState(false);
   useEffect(() => setName(person.name), [person.id, person.name]);
 
   const set = <K extends keyof SensoryProfile>(key: K, value: SensoryProfile[K]) =>
-    onSave({ ...person, sensory: { ...person.sensory, [key]: value } });
+    onChange({ sensory: { [key]: value } });
 
   const saveName = () => {
     const n = name.trim();
-    if (n && n !== person.name) onSave({ ...person, name: n });
+    if (n && n !== person.name) onChange({ name: n });
   };
 
   return (
@@ -44,7 +45,7 @@ export function ChildSettings({ person, canDelete, onSave, onDelete }: Props) {
         </div>
         {picking && (
           <EmojiPicker value={person.avatar?.replace(/^emoji:/, '') ?? ''}
-            onPick={(e) => { onSave({ ...person, avatar: `emoji:${e}` }); setPicking(false); }}
+            onPick={(e) => { onChange({ avatar: `emoji:${e}` }); setPicking(false); }}
             onClose={() => setPicking(false)} />
         )}
       </div>
@@ -55,7 +56,7 @@ export function ChildSettings({ person, canDelete, onSave, onDelete }: Props) {
           {PERSON_COLOURS.map((c) => (
             <button key={c} type="button" className={`swatch ${c === person.colour ? 'is-selected' : ''}`}
               style={{ background: c }} aria-pressed={c === person.colour} aria-label={`Colour ${c}`}
-              onClick={() => onSave({ ...person, colour: c })}>
+              onClick={() => onChange({ colour: c })}>
               {c === person.colour ? '✓' : ''}
             </button>
           ))}

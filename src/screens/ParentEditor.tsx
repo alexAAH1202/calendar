@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { CalendarSection } from '../calendar/CalendarSection';
 import { seedFor } from '../components/ChildColumn';
 import { ChildSettings } from '../components/ChildSettings';
 import { ConfirmButton } from '../components/ConfirmButton';
@@ -26,14 +27,22 @@ interface Props {
   parentTools?: ReactNode;
   onExit: () => void;
   header: ReactNode;
+  now: Date;
 }
 
+type Section = 'routines' | 'calendar';
+
 /** Parent mode: choose a child and a time of day, then edit that list. */
-export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit, header }: Props) {
+export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit, header, now }: Props) {
   const store = useStore();
   const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
   const [panel, setPanel] = useState<Panel>('none');
-  const child = people.find((p) => p.id === childId) ?? people[0];
+  const [section, setSection] = useState<Section>('routines');
+  const [pendingId, setPendingId] = useState<string>();
+  const found = people.find((p) => p.id === childId);
+  // A just-added child appears once saved; until then never fall back to (and edit) another child.
+  const waitingForNew = !found && childId !== undefined && childId === pendingId;
+  const child = found ?? (waitingForNew ? undefined : people[0]);
 
   const addChild = () => {
     const used = new Set(people.map((p) => p.colour));
@@ -46,6 +55,7 @@ export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit,
       sensory: {},
     };
     void store.savePerson(person);
+    setPendingId(person.id);
     setChildId(person.id);
     setPanel('settings');
   };
@@ -68,23 +78,35 @@ export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit,
       {panel === 'family' && parentTools}
 
       <div className="editor-row">
-        <Tabs label="Child" value={child?.id ?? ''} onChange={(id) => setChildId(id)}
-          options={people.map((p) => ({
-            value: p.id,
-            label: <>{p.avatar && <StepImage image={p.avatar} />} {p.name}</>,
-          }))} />
-        <button type="button" className="btn" onClick={addChild}>+ Add child</button>
+        <Tabs<Section> label="Section" value={section} onChange={setSection}
+          options={[{ value: 'routines', label: 'Routines' }, { value: 'calendar', label: 'Calendar' }]} />
       </div>
 
-      {child ? (
-        <ChildEditor key={child.id} child={child} currentTod={currentTod} panel={panel} onTogglePanel={toggle}
-          canDelete={people.length > 1}
-          onDeleted={() => {
-            setChildId(people.find((p) => p.id !== child.id)?.id);
-            setPanel('none');
-          }} />
+      {section === 'calendar' ? (
+        <CalendarSection now={now} />
       ) : (
-        <p className="hint">Add a child to start.</p>
+        <>
+          <div className="editor-row">
+            <Tabs label="Child" value={child?.id ?? ''} onChange={(id) => setChildId(id)}
+              options={people.map((p) => ({
+                value: p.id,
+                label: <>{p.avatar && <StepImage image={p.avatar} />} {p.name}</>,
+              }))} />
+            <button type="button" className="btn" onClick={addChild}>+ Add child</button>
+          </div>
+          {waitingForNew ? (
+            <p className="hint">Adding…</p>
+          ) : child ? (
+            <ChildEditor key={child.id} child={child} currentTod={currentTod} panel={panel} onTogglePanel={toggle}
+              canDelete={people.length > 1}
+              onDeleted={() => {
+                setChildId(people.find((p) => p.id !== child.id)?.id);
+                setPanel('none');
+              }} />
+          ) : (
+            <p className="hint">Add a child to start.</p>
+          )}
+        </>
       )}
     </main>
   );
@@ -146,7 +168,7 @@ function ChildEditor({ child, currentTod, panel, onTogglePanel, canDelete, onDel
       </div>
 
       {panel === 'settings' && (
-        <ChildSettings person={child} canDelete={canDelete} onSave={(p) => void store.savePerson(p)}
+        <ChildSettings person={child} canDelete={canDelete} onChange={(c) => void store.updatePerson(child.id, c)}
           onDelete={() => {
             void store.deletePerson(child.id, TIMES_OF_DAY.map((t) => routineId(child.id, t)));
             onDeleted();

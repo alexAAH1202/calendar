@@ -1,8 +1,8 @@
 # Family Wall Calendar
 
 A calm family wall calendar PWA for a 15.6" Android tablet (landscape) plus two parents' phones.
-Built one phase at a time from the tech spec. **Current state: Phase 3 (several children, profiles, templates)
-deployed to https://calendar-c8022.web.app.**
+Built one phase at a time from the tech spec. **Current state: Phase 4 (calendar) deployed to https://calendar-c8022.web.app.
+The calendar needs the one-time Apps Script setup in [`apps-script/README.md`](./apps-script/README.md).**
 
 Without Firebase settings the app runs on one device only, using local storage (as in Phase 1).
 
@@ -41,6 +41,44 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 - Both parents can read everything in the family. The Parent hold is a child lock, not security.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
+
+## Phase 4: what is built
+
+- **Why a bridge:** a web page cannot read Google's private iCal addresses (browsers block it), and browser-only
+  Google sign-in gives about an hour of Calendar access, so an untouched wall would stop updating. Instead a small,
+  free Google Apps Script ([`apps-script/Code.gs`](./apps-script/Code.gs)) runs in one parent's account and the
+  app talks to it with a secret key kept in the family's Firestore data. This departs from the spec's "no server
+  code" but stays free and needs no Cloud Functions.
+- **Wall:** a Today panel (today's events, then tomorrow's) beside the children's routines, and Week and Month
+  views. Each event shows its calendar's colour **and** name; shared-calendar events say who added them. The wall
+  goes back to Today after five quiet minutes on Week or Month. Events are read-only on the wall.
+- **Parent mode > Calendar:** add an event (title, calendar, date, all day or times, place), browse weeks,
+  refresh, and the calendar connection (address, key, which calendars, their names, which accept new events).
+- Events refresh every 10 minutes and when the screen wakes. The last events are kept on each device, so the wall
+  still shows them with no Wi-Fi, with a small "Calendar last updated …" line when they are over an hour old.
+  Events use no Firestore reads or writes.
+- Tests: the script against fake Google services (key checks, listing, creating, all-day dates), date logic
+  (multi-day, midnight, Monday weeks), the client (it never sends the key anywhere but `script.google.com`), and a
+  browser test against a fake bridge that answers like Apps Script (POST then redirect): connect with a wrong
+  then right key, choose calendars, add an event, an event added "in Google" appearing at the 10-minute refresh,
+  Week and Month, back to Today, and events still shown with the bridge unreachable.
+
+## Phase 4 acceptance test
+
+1. Do the Apps Script setup, connect it in Parent > Calendar, tick the three calendars.
+2. Add an event on the tablet: it appears in Google Calendar.
+3. Add an event in Google Calendar (or let Gmail add one): it shows on the wall within 15 minutes.
+
+## Phase 4: not tested yet
+
+- **Against real Google.** Everything above ran against fake Google services; this workspace cannot reach
+  `calendar.google.com` or `script.google.com`. The redirect behaviour was copied from how Apps Script web apps
+  are known to answer.
+- That Google's iCal address really is blocked in the tablet's browser (assumed, not checked).
+- Events in other time zones, recurring events (Apps Script returns each occurrence, untested), and calendars
+  with hundreds of events.
+- Editing or deleting events from the wall: only adding is built.
+- "Added by" depends on Google reporting the event's creator; for events Gmail adds it may be blank.
 
 ## Phase 3: what is built
 
@@ -103,6 +141,8 @@ To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>
 | `src/data/` | The data layer: `store.ts` contract, `localStore`, `firestoreStore`, family setup, save queue, hooks |
 | `src/auth/` | Google sign-in and finding or joining the family |
 | `firestore.rules`, `tests/rules.test.ts` | Security rules and their emulator tests |
+| `src/calendar/` | Calendar bridge client, event dates, Today / Week / Month, setup and add-event forms |
+| `apps-script/` | The calendar bridge script and its setup guide; tested by `tests/code-gs.test.ts` |
 | `src/components/` | Child step, edit step, drag list (dnd-kit), hold button, idle exit |
 | `src/screens/` | The routine screen |
 

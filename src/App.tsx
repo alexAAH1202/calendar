@@ -1,4 +1,6 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
+import { CalendarProvider } from './calendar/CalendarContext';
+import { emailKey } from './calendar/useCalendar';
 import { useAuth } from './auth/useAuth';
 import { parentOf, useFamily } from './auth/useFamily';
 import { FamilyPanel } from './components/FamilyPanel';
@@ -30,7 +32,9 @@ function LocalApp() {
 function Routine({ store, parentTools }: { store: FamilyStore; parentTools?: ReactNode }) {
   return (
     <StoreContext.Provider value={store}>
-      <WallScreen isPhone={isPhone} parentTools={parentTools} />
+      <CalendarProvider>
+        <WallScreen isPhone={isPhone} parentTools={parentTools} />
+      </CalendarProvider>
     </StoreContext.Provider>
   );
 }
@@ -54,6 +58,13 @@ function FamilyGate({ handles, user, onSignOut }: {
   const { state, create, join, retry } = useFamily(handles.db, user);
   const familyId = state.status === 'ready' ? state.family.id : undefined;
   const store = useMemo(() => (familyId ? createFirestoreStore(handles.db, familyId) : undefined), [handles.db, familyId]);
+
+  // Record this parent's email and first name, so shared-calendar events can say who added them.
+  useEffect(() => {
+    if (!store || !user.email) return;
+    const p = parentOf(user);
+    void store.putDoc(['settings', 'parents'], { emails: { [emailKey(p.email)]: p.name } }, true);
+  }, [store, user]);
 
   if (state.status === 'loading') return <Splash text="Finding your family…" />;
   if (state.status === 'error') {

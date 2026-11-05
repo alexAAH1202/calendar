@@ -1,6 +1,11 @@
 import { format } from 'date-fns';
 import { useCallback, useState, type ReactNode } from 'react';
+import { useCalendarData } from '../calendar/CalendarContext';
+import { MonthView } from '../calendar/MonthView';
+import { TodayPanel } from '../calendar/TodayPanel';
+import { WeekView } from '../calendar/WeekView';
 import { ChildBoard } from '../components/ChildBoard';
+import { Tabs } from '../components/Tabs';
 import { HoldButton } from '../components/HoldButton';
 import { useIdleExit } from '../components/useIdleExit';
 import { useStore } from '../data/StoreContext';
@@ -9,6 +14,8 @@ import { usePeople } from '../data/usePeople';
 import { dayKey } from '../date/dayKey';
 import { useNow } from '../date/useNow';
 import { ParentEditor } from './ParentEditor';
+
+type WallView = 'today' | 'week' | 'month';
 
 interface Props {
   /** Phones open straight into edit mode and do not time out of it. */
@@ -25,8 +32,14 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const tod = timeOfDayAt(now);
   const { children, loaded } = usePeople(store);
   const [editing, setEditing] = useState(isPhone);
+  const [view, setView] = useState<WallView>('today');
+  const calendar = useCalendarData();
+  const calendarReady = calendar.configured;
   const exitEdit = useCallback(() => setEditing(false), []);
+  const backToToday = useCallback(() => setView('today'), []);
   useIdleExit(editing && !isPhone, exitEdit);
+  // The wall drifts back to Today after five quiet minutes on Week or Month.
+  useIdleExit(!editing && view !== 'today', backToToday, 5 * 60_000);
 
   const dateLine = (
     <div>
@@ -34,26 +47,42 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
     </div>
   );
 
-  if (!loaded) return <main className="screen screen--child"><p className="hint">Loading…</p></main>;
+  if (!loaded || !calendar.known) return <main className="screen screen--child"><p className="hint">Loading…</p></main>;
 
   if (editing) {
     return (
       <ParentEditor people={children} currentTod={tod} isPhone={isPhone} parentTools={parentTools}
-        onExit={exitEdit} header={dateLine} />
+        onExit={exitEdit} header={dateLine} now={now} />
     );
   }
 
+  const wide = calendarReady || children.length > 1;
   return (
-    <main className={`screen screen--child ${children.length > 1 ? 'screen--wide' : ''}`}>
+    <main className={`screen screen--child ${wide ? 'screen--wide' : ''}`}>
       <header className="screen-header">
         {dateLine}
+        {calendarReady && (
+          <Tabs<WallView> label="View" value={view} onChange={setView}
+            options={[{ value: 'today', label: 'Today' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} />
+        )}
         {isPhone ? (
           <button type="button" className="btn" onClick={() => setEditing(true)}>Edit</button>
         ) : (
           <HoldButton label="Parent edit mode" onHold={() => setEditing(true)}>Parent</HoldButton>
         )}
       </header>
-      <ChildBoard children={children} day={day} tod={tod} />
+      {view === 'week' && calendarReady ? (
+        <WeekView now={now} anchor={now} />
+      ) : view === 'month' && calendarReady ? (
+        <MonthView now={now} anchor={now} />
+      ) : calendarReady ? (
+        <div className="today-layout">
+          <TodayPanel now={now} />
+          <ChildBoard children={children} day={day} tod={tod} />
+        </div>
+      ) : (
+        <ChildBoard children={children} day={day} tod={tod} />
+      )}
     </main>
   );
 }
