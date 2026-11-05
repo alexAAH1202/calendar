@@ -25,7 +25,8 @@ npm run deploy     # build, then deploy Hosting and the security rules (needs `f
    or the region nearest you. The location cannot be changed later.
 4. **Project settings > Your apps > Web (`</>`)**: register an app (Hosting box not needed). Copy the
    `apiKey`, `projectId` and `appId` values into `.env.local` (see `.env.example`). Set
-   `VITE_FIREBASE_AUTH_DOMAIN` to `<projectId>.web.app`.
+   `VITE_FIREBASE_AUTH_DOMAIN` to `<projectId>.firebaseapp.com` (using `.web.app` gives Google's
+   `redirect_uri_mismatch` error unless you add it to the OAuth client's redirect URIs).
 5. `npm run deploy` publishes the app to `https://<projectId>.web.app` and uploads `firestore.rules`.
 
 After the first deploy, in Google Cloud console > APIs & Services > Credentials, restrict the browser API key
