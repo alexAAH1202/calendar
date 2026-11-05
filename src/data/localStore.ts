@@ -125,8 +125,8 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     },
     watchDoc(path, cb) {
       const key = path.join('/');
-      const emit = () => cb(read(key));
-      emit();
+      const emit = (local: boolean) => cb(read(key), { local, pendingSync: false });
+      emit(true);
       return watch(key, emit);
     },
     async putDoc(path, data, merge = false) {

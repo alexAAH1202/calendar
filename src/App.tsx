@@ -8,6 +8,7 @@ import { firebaseConfig } from './data/config';
 import { inviteParent } from './data/family';
 import { startFirebase, type FirebaseHandles } from './data/firebase';
 import { createFirestoreStore } from './data/firestoreStore';
+import { FamilyInfoContext, LOCAL_FAMILY, type FamilyInfo } from './data/FamilyInfo';
 import { createLocalStore } from './data/localStore';
 import { StoreContext } from './data/StoreContext';
 import type { FamilyStore } from './data/store';
@@ -29,12 +30,14 @@ function LocalApp() {
   return <Routine store={store} />;
 }
 
-function Routine({ store, parentTools }: { store: FamilyStore; parentTools?: ReactNode }) {
+function Routine({ store, parentTools, family = LOCAL_FAMILY }: { store: FamilyStore; parentTools?: ReactNode; family?: FamilyInfo }) {
   return (
     <StoreContext.Provider value={store}>
-      <CalendarProvider>
-        <WallScreen isPhone={isPhone} parentTools={parentTools} />
-      </CalendarProvider>
+      <FamilyInfoContext.Provider value={family}>
+        <CalendarProvider>
+          <WallScreen isPhone={isPhone} parentTools={parentTools} />
+        </CalendarProvider>
+      </FamilyInfoContext.Provider>
     </StoreContext.Provider>
   );
 }
@@ -82,9 +85,15 @@ function FamilyGate({ handles, user, onSignOut }: {
         onCreate={create} onJoin={join} onSignOut={onSignOut} />
     );
   }
+  const family = state.family;
+  const info: FamilyInfo = {
+    parents: family.members.map((uid) => ({ id: uid, name: family.parentNames[uid] ?? 'Parent' })),
+    me: { id: user.uid, name: family.parentNames[user.uid] ?? parentOf(user).name },
+  };
   return (
     <Routine
       store={store}
+      family={info}
       parentTools={
         <FamilyPanel family={state.family} signedInAs={user.email ?? ''}
           onInvite={(email) => inviteParent(handles.db, state.family.id, email)} onSignOut={onSignOut} />

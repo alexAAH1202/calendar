@@ -1,11 +1,18 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode, SyntheticEvent } from 'react';
-import type { Step } from '../data/types';
+/** Anything with an id, a title and an optional symbol: routine steps, chores. */
+export interface ListItem {
+  id: string;
+  title: string;
+  image?: string;
+}
 import { StepImage } from './StepImage';
 
 interface Props {
-  step: Step;
+  step: ListItem;
+  /** A small second line, e.g. "Every week · next Mon 9 Nov". */
+  meta?: string;
   index: number;
   count: number;
   expanded: boolean;
@@ -22,7 +29,7 @@ const stop = (e: SyntheticEvent) => e.stopPropagation();
 export const noDrag = { onPointerDown: stop, onMouseDown: stop, onTouchStart: stop, onKeyDown: stop };
 
 /** One step in edit mode: press-and-hold anywhere on the row to drag, or use the arrows. */
-export function EditStep({ step, index, count, expanded, onUp, onDown, onToggleMore, onPickEmoji, actions }: Props) {
+export function EditStep({ step, meta, index, count, expanded, onUp, onDown, onToggleMore, onPickEmoji, actions }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
 
   return (
@@ -40,7 +47,10 @@ export function EditStep({ step, index, count, expanded, onUp, onDown, onToggleM
         aria-label={`Change the symbol for ${step.title}`}>
         <StepImage image={step.image} />
       </button>
-      <span className="step-title">{step.title}</span>
+      <span className="step-title">
+        {step.title}
+        {meta && <span className="step-meta">{meta}</span>}
+      </span>
       <span className="edit-buttons">
         <button type="button" className="icon-btn" {...noDrag} onClick={onUp} disabled={index === 0}
           aria-label={`Move ${step.title} up`}>▲</button>

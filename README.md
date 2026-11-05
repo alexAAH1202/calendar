@@ -1,7 +1,7 @@
 # Family Wall Calendar
 
 A calm family wall calendar PWA for a 15.6" Android tablet (landscape) plus two parents' phones.
-Built one phase at a time from the tech spec. **Current state: Phase 4 (calendar) deployed to https://calendar-c8022.web.app.
+Built one phase at a time from the tech spec. **Current state: Phase 5 (chores and brain dump) deployed to https://calendar-c8022.web.app.
 The calendar needs the one-time Apps Script setup in [`apps-script/README.md`](./apps-script/README.md).**
 
 Without Firebase settings the app runs on one device only, using local storage (as in Phase 1).
@@ -41,6 +41,43 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 - Both parents can read everything in the family. The Parent hold is a child lock, not security.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
+
+## Phase 5: what is built
+
+- **Chores and to-dos** (`chores/{personId}`, one document per person, items in display order): for each child and
+  each parent, with a symbol and a repeat rule: once, every day, school days (Mon–Fri), every week, every two
+  weeks, every month. Ticking a repeating chore moves it to its next date on its own schedule (a Monday chore
+  done on Wednesday is next due the following Monday) and it still shows as done for the rest of today; an
+  accidental tick is undone exactly. A one-off without a date is a to-do for any day; finished ones collect under
+  "Finished" until cleared. Overdue chores say "From Tuesday".
+- **Wall:** a Chores tab with a column per person showing what is due today. Same tick guard as routines.
+- **Parent mode > Chores:** per person, add / reorder (hold-drag or arrows) / change symbol, repeat and date / delete.
+- **Parent mode > Brain dump** (`braindump/{parentUid}`): the signed-in parent's own list in High, Medium and Low.
+  Press-and-hold drag within and **between** groups (including into an empty group), arrows within a group,
+  "Move to …" from the ⋯ menu, done and clear done, 10-step undo. One array per parent, so moving an item to High
+  is one write. The screen says plainly that it is hidden in the app, not locked: both parents' accounts can read it.
+- One shared list hook (`src/lists/useItemList.ts`) for both: instant changes, background save with retry, undo,
+  "Updated on another device".
+- Tests: repeat rules (weekends, month ends, late completion, exact untick), brain dump moves, the list hook; and
+  a browser test with two devices on one account and the other parent on a third: drag from Low into an empty
+  High on the tablet reached the phone in under 0.1 s, a "Move to High" on the phone reached the tablet, both kept
+  the order after reloading, and the other parent saw only their own (empty) brain dump.
+
+## Phase 5 acceptance test
+
+Move a brain dump item to High on the phone; it shows in High on the tablet (signed in as the same parent),
+and stays there after reloading both.
+
+## Phase 5: not tested yet
+
+- On the real tablet and phones.
+- A reload within a few milliseconds of a change can lose that change on that device (the browser had not stored
+  it yet). Changes reached the other device in about 0.1 s in tests; a person cannot reload that fast, but the
+  Phase 6 nightly reload should check nothing was changed in the last few seconds.
+- Dragging a routine step between times of day (still by the ⋯ menu only).
+- Chores with a due date far in the past on a monthly rule across years; time-zone changes.
+- The brain dump on the wall tablet: it is parent-mode only, and the tablet is signed in as one parent, so the
+  other parent sees theirs on their own phone.
 
 ## Phase 4: what is built
 
@@ -142,6 +179,7 @@ To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>
 | `src/auth/` | Google sign-in and finding or joining the family |
 | `firestore.rules`, `tests/rules.test.ts` | Security rules and their emulator tests |
 | `src/calendar/` | Calendar bridge client, event dates, Today / Week / Month, setup and add-event forms |
+| `src/lists/` | Chores (repeat rules, wall board, editor), brain dump (groups, moves, drag between groups), list hook |
 | `apps-script/` | The calendar bridge script and its setup guide; tested by `tests/code-gs.test.ts` |
 | `src/components/` | Child step, edit step, drag list (dnd-kit), hold button, idle exit |
 | `src/screens/` | The routine screen |

@@ -15,6 +15,14 @@ export interface RoutineSnapshot {
   pendingSync: boolean;
 }
 
+/** Where a document snapshot came from. */
+export interface DocMeta {
+  /** Reflects a change made on this device. */
+  local: boolean;
+  /** A change made here has not reached the server yet. */
+  pendingSync: boolean;
+}
+
 export interface FamilyStore {
   subscribeRoutine(routineId: string, cb: (s: RoutineSnapshot) => void): () => void;
   /** Applies the change on this device at once; syncing happens in the background. */
@@ -36,7 +44,7 @@ export interface FamilyStore {
    * Generic documents inside the family, by path relative to it, e.g. ['settings', 'calendarBridge'].
    * Collections are odd-length paths (['calendars']), documents even-length.
    */
-  watchDoc<T>(path: string[], cb: (data: T | undefined) => void): () => void;
+  watchDoc<T>(path: string[], cb: (data: T | undefined, meta: DocMeta) => void): () => void;
   putDoc(path: string[], data: object, merge?: boolean): Promise<void>;
   watchCollection<T>(path: string[], cb: (docs: (T & { id: string })[]) => void): () => void;
   removeDoc(path: string[]): Promise<void>;

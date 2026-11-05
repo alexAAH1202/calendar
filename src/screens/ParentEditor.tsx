@@ -1,5 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { CalendarSection } from '../calendar/CalendarSection';
+import { BrainDump } from '../lists/BrainDump';
+import { ChoresSection } from '../lists/ChoresSection';
+import { dayKey } from '../date/dayKey';
 import { seedFor } from '../components/ChildColumn';
 import { ChildSettings } from '../components/ChildSettings';
 import { ConfirmButton } from '../components/ConfirmButton';
@@ -30,7 +33,7 @@ interface Props {
   now: Date;
 }
 
-type Section = 'routines' | 'calendar';
+type Section = 'routines' | 'chores' | 'braindump' | 'calendar';
 
 /** Parent mode: choose a child and a time of day, then edit that list. */
 export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit, header, now }: Props) {
@@ -79,11 +82,20 @@ export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit,
 
       <div className="editor-row">
         <Tabs<Section> label="Section" value={section} onChange={setSection}
-          options={[{ value: 'routines', label: 'Routines' }, { value: 'calendar', label: 'Calendar' }]} />
+          options={[
+            { value: 'routines', label: 'Routines' },
+            { value: 'chores', label: 'Chores' },
+            { value: 'braindump', label: 'Brain dump' },
+            { value: 'calendar', label: 'Calendar' },
+          ]} />
       </div>
 
       {section === 'calendar' ? (
         <CalendarSection now={now} />
+      ) : section === 'chores' ? (
+        <ChoresSection children={people} today={dayKey(now)} />
+      ) : section === 'braindump' ? (
+        <BrainDump />
       ) : (
         <>
           <div className="editor-row">

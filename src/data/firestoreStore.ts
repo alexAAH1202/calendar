@@ -85,7 +85,9 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
       deleteDoc(familyDoc('templates', id)).catch(reportError);
     },
     watchDoc(path, cb) {
-      return onSnapshot(familyDoc(...path), (snap) => cb(snap.data() as never));
+      return onSnapshot(familyDoc(...path), { includeMetadataChanges: true }, (snap) =>
+        cb(snap.data() as never, { local: snap.metadata.hasPendingWrites, pendingSync: snap.metadata.hasPendingWrites }),
+      );
     },
     async putDoc(path, data, merge = false) {
       setDoc(familyDoc(...path), data, { merge }).catch(reportError);
