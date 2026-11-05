@@ -11,6 +11,7 @@ interface Props {
   onUp: () => void;
   onDown: () => void;
   onDelete: () => void;
+  onPickEmoji: () => void;
 }
 
 /** Stops a press on a button from also starting a drag of the row. */
@@ -18,7 +19,7 @@ const stop = (e: SyntheticEvent) => e.stopPropagation();
 const noDrag = { onPointerDown: stop, onMouseDown: stop, onTouchStart: stop, onKeyDown: stop };
 
 /** One step in edit mode: press-and-hold anywhere on the row to drag, or use the arrows. */
-export function EditStep({ step, index, count, onUp, onDown, onDelete }: Props) {
+export function EditStep({ step, index, count, onUp, onDown, onDelete, onPickEmoji }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
 
   return (
@@ -32,7 +33,10 @@ export function EditStep({ step, index, count, onUp, onDown, onDelete }: Props) 
       aria-label={`${step.title}, position ${index + 1} of ${count}. Hold to drag.`}
     >
       <span className="drag-handle" aria-hidden="true">⠿</span>
-      <StepImage image={step.image} />
+      <button type="button" className="emoji-button emoji-button--step" {...noDrag} onClick={onPickEmoji}
+        aria-label={`Change the symbol for ${step.title}`}>
+        <StepImage image={step.image} />
+      </button>
       <span className="step-title">{step.title}</span>
       <span className="edit-buttons">
         <button type="button" className="icon-btn" {...noDrag} onClick={onUp} disabled={index === 0}

@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// One family per household. Parents are listed in families/{fid}.members.
+// Children have no accounts. Both parents can read everything in the family.
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Google accounts have verified emails; the invite matches on that email.
+    function invited(data) {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in data.invitedEmails;
+    }
+
+    match /families/{fid} {
+      allow read: if signedIn()
+        && (request.auth.uid in resource.data.members || invited(resource.data));
+
+      // A new family starts with only its creator.
+      allow create: if signedIn()
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.invitedEmails is list
+        && request.resource.data.parentNames.keys().hasOnly([request.auth.uid]);
+
+      // Members may change the family. An invited parent may only add themselves.
+      allow update: if signedIn() && (
+        request.auth.uid in resource.data.members
+        || (
+          invited(resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'parentNames'])
+          && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+          && request.resource.data.parentNames.diff(resource.data.parentNames).affectedKeys().hasOnly([request.auth.uid])
+        )
+      );
+
+      allow delete: if false;
+
+      // Everything inside the family: members only.
+      // {collection}/ makes this match only documents below the family, never the family itself.
+      match /{collection}/{document=**} {
+        allow read, write: if signedIn()
+          && request.auth.uid in get(/databases/$(db)/documents/families/$(fid)).data.members;
+      }
+    }
+  }
+}

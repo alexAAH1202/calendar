@@ -21,9 +21,10 @@ interface Props {
   onUp: (id: string) => void;
   onDown: (id: string) => void;
   onDelete: (id: string) => void;
+  onPickEmoji: (id: string) => void;
 }
 
-export function EditList({ steps, onDragMove, onUp, onDown, onDelete }: Props) {
+export function EditList({ steps, onDragMove, onUp, onDown, onDelete, onPickEmoji }: Props) {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: HOLD_TO_DRAG }),
     useSensor(TouchSensor, { activationConstraint: HOLD_TO_DRAG }),
@@ -47,6 +48,7 @@ export function EditList({ steps, onDragMove, onUp, onDown, onDelete }: Props) {
               onUp={() => onUp(step.id)}
               onDown={() => onDown(step.id)}
               onDelete={() => onDelete(step.id)}
+              onPickEmoji={() => onPickEmoji(step.id)}
             />
           ))}
         </ol>
