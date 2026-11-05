@@ -1,14 +1,15 @@
-/** Shapes match the Firestore model in the spec, so phase 2 can store them unchanged. */
+/** Shapes match the Firestore model in the spec. */
 export interface Step {
   id: string;
   title: string;
-  /** "emoji:👕" for now; "arasaac:<id>" or a small data URL later. */
+  /** "emoji:👕"; a symbol-library id or small data URL may follow later. */
   image?: string;
   timerSeconds?: number;
   stars: number;
 }
 
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
+export const TIMES_OF_DAY = ['morning', 'afternoon', 'evening'] as const;
+export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 
 export interface Routine {
   id: string;
@@ -18,11 +19,45 @@ export interface Routine {
   updatedAt: number;
 }
 
+export type SymbolMode = 'symbols' | 'symbolsText' | 'text';
+/** What a done step does on the child view. The stored order never changes. */
+export type CompletedBehaviour = 'stay' | 'moveToBottom' | 'hide';
+export type TextSize = 'normal' | 'large' | 'larger' | 'largest';
+export type PaletteName = 'calm' | 'warm' | 'cool' | 'contrast';
+
+export interface SensoryProfile {
+  /** Soft cue on tick. Off by default. */
+  sound: boolean;
+  /** 'none' by default: no motion at all. 'soft' allows a 200 ms fade. */
+  animation: 'none' | 'soft';
+  textSize: TextSize;
+  symbolMode: SymbolMode;
+  completedBehaviour: CompletedBehaviour;
+  palette: PaletteName;
+  /** 0.6 (dim) to 1 (full). */
+  brightness: number;
+}
+
 export interface Person {
   id: string;
   name: string;
   role: 'child' | 'parent';
   colour: string;
+  /** "emoji:🦊" shown beside the name. */
+  avatar?: string;
+  /** Present on children; missing fields fall back to the defaults. */
+  sensory?: Partial<SensoryProfile>;
+  /** Display order of children on the wall. */
+  order?: number;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  timeOfDay: TimeOfDay;
+  steps: Step[];
+  /** Built-in templates come with the app and cannot be deleted. */
+  builtIn?: boolean;
 }
 
 export interface DayRecord {

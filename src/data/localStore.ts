@@ -1,6 +1,7 @@
 import { dayDocId } from '../date/dayKey';
 import type { FamilyStore, RoutineSnapshot } from './store';
-import type { DayRecord, Routine } from './types';
+import { SEED_CHILD } from './seed';
+import type { DayRecord, Person, Routine, Template } from './types';
 
 const PREFIX = 'fwc:';
 
@@ -35,6 +36,28 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     return () => void listeners.delete(l);
   };
 
+  /** Every stored document under a collection prefix, e.g. "people/". */
+  const list = <T,>(prefix: string): T[] => {
+    const out: T[] = [];
+    for (let i = 0; i < storage.length; i++) {
+      const k = storage.key(i);
+      if (k?.startsWith(PREFIX + prefix)) {
+        const v = read<T>(k.slice(PREFIX.length));
+        if (v) out.push(v);
+      }
+    }
+    return out;
+  };
+  const watchPrefix = (prefix: string, emit: () => void) => {
+    const l: Listener = (k) => k.startsWith(prefix) && emit();
+    listeners.add(l);
+    return () => void listeners.delete(l);
+  };
+  const remove = (key: string) => {
+    storage.removeItem(PREFIX + key);
+    notify(key, true);
+  };
+
   const dayPath = (day: string, pid: string) => `days/${dayDocId(day, pid)}`;
 
   return {
@@ -61,6 +84,35 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
       const prev = read<DayRecord>(key)?.doneStepIds ?? [];
       const next = done ? (prev.includes(stepId) ? prev : [...prev, stepId]) : prev.filter((s) => s !== stepId);
       await write(key, { doneStepIds: next });
+    },
+    subscribePeople(cb) {
+      // A device that has never saved anyone starts with the example child.
+      const emit = () => cb(storage.getItem(PREFIX + 'people:init') ? list<Person>('people/') : [SEED_CHILD]);
+      emit();
+      return watchPrefix('people', emit);
+    },
+    async savePerson(person) {
+      if (!storage.getItem(PREFIX + 'people:init')) {
+        storage.setItem(PREFIX + 'people:init', '1');
+        if (person.id !== SEED_CHILD.id) storage.setItem(PREFIX + `people/${SEED_CHILD.id}`, JSON.stringify(SEED_CHILD));
+      }
+      await write(`people/${person.id}`, person);
+    },
+    async deletePerson(personId, routineIds) {
+      storage.setItem(PREFIX + 'people:init', '1');
+      routineIds.forEach((id) => remove(`routines/${id}`));
+      remove(`people/${personId}`);
+    },
+    subscribeTemplates(cb) {
+      const emit = () => cb(list<Template>('templates/'));
+      emit();
+      return watchPrefix('templates/', emit);
+    },
+    saveTemplate(template) {
+      return write(`templates/${template.id}`, template);
+    },
+    async deleteTemplate(id) {
+      remove(`templates/${id}`);
     },
     onWriteError() {
       return () => {};

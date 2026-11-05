@@ -1,4 +1,4 @@
-import type { useRoutine } from '../data/useRoutine';
+import type { RoutineSet } from '../data/useRoutineSet';
 import { useEffect, useState } from 'react';
 import { useOnline } from './useOnline';
 
@@ -14,7 +14,7 @@ function useSustained(value: boolean, ms: number): boolean {
 }
 
 /** Calm, parent-mode-only messages about saving and syncing. Never shown on the child view. */
-export function SyncNotices({ routine }: { routine: ReturnType<typeof useRoutine> }) {
+export function SyncNotices({ routine }: { routine: RoutineSet }) {
   const online = useOnline();
   const slowSync = useSustained(routine.pendingSync, 2000);
   return (

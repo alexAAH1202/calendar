@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { Step } from '../data/types';
+import type { Step, SymbolMode } from '../data/types';
 import { StepImage } from './StepImage';
 
 interface Props {
   step: Step;
   done: boolean;
   onSetDone: (done: boolean) => void;
+  symbolMode?: SymbolMode;
 }
 
 const CONFIRM_MS = 4000;
@@ -15,7 +16,7 @@ const CONFIRM_MS = 4000;
  * second action: the first tap on a done step shows an "Not done" button,
  * which hides itself again after a few seconds.
  */
-export function ChildStep({ step, done, onSetDone }: Props) {
+export function ChildStep({ step, done, onSetDone, symbolMode = 'symbolsText' }: Props) {
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
@@ -37,8 +38,8 @@ export function ChildStep({ step, done, onSetDone }: Props) {
         onClick={() => (done ? setConfirming(true) : onSetDone(true))}
       >
         <span className="tick" aria-hidden="true">{done ? '✓' : ''}</span>
-        <StepImage image={step.image} />
-        <span className="step-title">{step.title}</span>
+        {symbolMode !== 'text' && <StepImage image={step.image} />}
+        <span className={symbolMode === 'symbols' ? 'visually-hidden' : 'step-title'}>{step.title}</span>
         {done && <span className="visually-hidden">(done)</span>}
       </button>
       {confirming && (

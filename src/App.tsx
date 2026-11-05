@@ -7,11 +7,10 @@ import { inviteParent } from './data/family';
 import { startFirebase, type FirebaseHandles } from './data/firebase';
 import { createFirestoreStore } from './data/firestoreStore';
 import { createLocalStore } from './data/localStore';
-import { SEED_CHILD, SEED_ROUTINE } from './data/seed';
 import { StoreContext } from './data/StoreContext';
 import type { FamilyStore } from './data/store';
 import { FamilySetupScreen } from './screens/FamilySetupScreen';
-import { RoutineScreen } from './screens/RoutineScreen';
+import { WallScreen } from './screens/WallScreen';
 import { SignInScreen } from './screens/SignInScreen';
 
 /** Phones open straight into edit mode; the wall tablet opens in child mode. */
@@ -31,7 +30,7 @@ function LocalApp() {
 function Routine({ store, parentTools }: { store: FamilyStore; parentTools?: ReactNode }) {
   return (
     <StoreContext.Provider value={store}>
-      <RoutineScreen person={SEED_CHILD} seed={SEED_ROUTINE} isPhone={isPhone} parentTools={parentTools} />
+      <WallScreen isPhone={isPhone} parentTools={parentTools} />
     </StoreContext.Provider>
   );
 }

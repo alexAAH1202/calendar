@@ -1,14 +1,17 @@
 import {
   arrayRemove,
   arrayUnion,
+  collection,
+  deleteDoc,
   doc,
   onSnapshot,
   setDoc,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import { dayDocId } from '../date/dayKey';
 import type { FamilyStore } from './store';
-import type { Routine } from './types';
+import type { Person, Routine, Template } from './types';
 
 /**
  * One family's data in Firestore. Writes are not awaited: Firestore applies
@@ -49,6 +52,33 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
         { personId: pid, date: day, doneStepIds: done ? arrayUnion(stepId) : arrayRemove(stepId) },
         { merge: true },
       ).catch(reportError);
+    },
+    subscribePeople(cb) {
+      return onSnapshot(collection(db, 'families', familyId, 'people'), (snap) =>
+        cb(snap.docs.map((d) => ({ ...(d.data() as Omit<Person, 'id'>), id: d.id }))),
+      );
+    },
+    async savePerson(person) {
+      const { id, ...data } = person;
+      setDoc(familyDoc('people', id), data).catch(reportError);
+    },
+    async deletePerson(personId, routineIds) {
+      const batch = writeBatch(db);
+      routineIds.forEach((rid) => batch.delete(familyDoc('routines', rid)));
+      batch.delete(familyDoc('people', personId));
+      batch.commit().catch(reportError);
+    },
+    subscribeTemplates(cb) {
+      return onSnapshot(collection(db, 'families', familyId, 'templates'), (snap) =>
+        cb(snap.docs.map((d) => ({ ...(d.data() as Omit<Template, 'id'>), id: d.id }))),
+      );
+    },
+    async saveTemplate(template) {
+      const { id, ...data } = template;
+      setDoc(familyDoc('templates', id), data).catch(reportError);
+    },
+    async deleteTemplate(id) {
+      deleteDoc(familyDoc('templates', id)).catch(reportError);
     },
     onWriteError(cb) {
       errorListeners.add(cb);

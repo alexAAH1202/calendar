@@ -4,7 +4,7 @@
  *  - localStore: this device only (used when no Firebase config is set)
  *  - firestoreStore: one family in Firestore, shared by tablet and phones
  */
-import type { Routine } from './types';
+import type { Person, Routine, Template } from './types';
 
 export interface RoutineSnapshot {
   /** undefined when the routine has never been saved. */
@@ -21,6 +21,15 @@ export interface FamilyStore {
   saveRoutine(routine: Routine): Promise<void>;
   subscribeDay(day: string, personId: string, cb: (doneStepIds: string[]) => void): () => void;
   setStepDone(day: string, personId: string, stepId: string, done: boolean): Promise<void>;
+  /** All people in the family (children and, later, parents). */
+  subscribePeople(cb: (people: Person[]) => void): () => void;
+  savePerson(person: Person): Promise<void>;
+  /** Removes the person and their routines. Day history is kept. */
+  deletePerson(personId: string, routineIds: string[]): Promise<void>;
+  /** The family's own templates (built-in ones live in the app). */
+  subscribeTemplates(cb: (templates: Template[]) => void): () => void;
+  saveTemplate(template: Template): Promise<void>;
+  deleteTemplate(templateId: string): Promise<void>;
   /** Called when the server refuses a write (for example, permission denied). */
   onWriteError(cb: (error: unknown) => void): () => void;
 }

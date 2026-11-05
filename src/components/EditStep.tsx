@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { SyntheticEvent } from 'react';
+import type { ReactNode, SyntheticEvent } from 'react';
 import type { Step } from '../data/types';
 import { StepImage } from './StepImage';
 
@@ -8,18 +8,21 @@ interface Props {
   step: Step;
   index: number;
   count: number;
+  expanded: boolean;
   onUp: () => void;
   onDown: () => void;
-  onDelete: () => void;
+  onToggleMore: () => void;
   onPickEmoji: () => void;
+  /** Shown under the row when "⋯" is open: move to another time, delete. */
+  actions: ReactNode;
 }
 
 /** Stops a press on a button from also starting a drag of the row. */
 const stop = (e: SyntheticEvent) => e.stopPropagation();
-const noDrag = { onPointerDown: stop, onMouseDown: stop, onTouchStart: stop, onKeyDown: stop };
+export const noDrag = { onPointerDown: stop, onMouseDown: stop, onTouchStart: stop, onKeyDown: stop };
 
 /** One step in edit mode: press-and-hold anywhere on the row to drag, or use the arrows. */
-export function EditStep({ step, index, count, onUp, onDown, onDelete, onPickEmoji }: Props) {
+export function EditStep({ step, index, count, expanded, onUp, onDown, onToggleMore, onPickEmoji, actions }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
 
   return (
@@ -43,9 +46,10 @@ export function EditStep({ step, index, count, onUp, onDown, onDelete, onPickEmo
           aria-label={`Move ${step.title} up`}>▲</button>
         <button type="button" className="icon-btn" {...noDrag} onClick={onDown} disabled={index === count - 1}
           aria-label={`Move ${step.title} down`}>▼</button>
-        <button type="button" className="icon-btn icon-btn--delete" {...noDrag} onClick={onDelete}
-          aria-label={`Delete ${step.title}`}>✕</button>
+        <button type="button" className="icon-btn" {...noDrag} onClick={onToggleMore} aria-expanded={expanded}
+          aria-label={`More for ${step.title}`}>⋯</button>
       </span>
+      {expanded && <div className="step-actions" {...noDrag}>{actions}</div>}
     </li>
   );
 }

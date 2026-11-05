@@ -1,8 +1,8 @@
 # Family Wall Calendar
 
 A calm family wall calendar PWA for a 15.6" Android tablet (landscape) plus two parents' phones.
-Built one phase at a time from the tech spec. **Current state: Phase 2 (Firebase and sync) built and tested
-against the Firebase emulators; not yet deployed to a real Firebase project.**
+Built one phase at a time from the tech spec. **Current state: Phase 3 (several children, profiles, templates)
+deployed to https://calendar-c8022.web.app.**
 
 Without Firebase settings the app runs on one device only, using local storage (as in Phase 1).
 
@@ -41,6 +41,24 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 - Both parents can read everything in the family. The Parent hold is a child lock, not security.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
+
+## Phase 3: what is built
+
+- **Several children.** The wall shows one column per child with the routine for the current time of day:
+  morning until 12:00, afternoon until 17:00, then evening (`src/data/timeOfDay.ts`).
+- **Parent mode** (hold Parent): pick a child, pick Morning / Afternoon / Evening, edit that list. "+ Add child".
+  "⋯" on a step offers **Move to** another time of day and **Delete** (needs a second tap). One **Undo** covers the
+  last 10 changes across all three lists of that child, including moves between them.
+- **Sensory profile per child** (*child's settings*): symbols / symbols and words / words; four text sizes
+  (smallest 28 px); done steps **stay in place** (default), **move to bottom** or **hide**; Calm / Warm / Cool /
+  High contrast colours (all tested for WCAG AA contrast); brightness; motion none (default) or a soft 200 ms fade;
+  sound off (default) or a quiet chime on ticking. Also name, colour and a symbol for the child.
+  How done steps show is a display rule only: the saved order never changes.
+- **Templates**: School morning, After school and Bedtime come with the app; save any list as your own template.
+  "Add steps" appends copies, "Replace list" (second tap) swaps the list; both can be undone. Copies get new ids,
+  so ticks never carry over between lists.
+- **Midnight**: ticks are stored per date, so at midnight the wall reads a new, empty day. Tested with a fake clock
+  against the emulator: the swap wrote or changed **no documents**, and yesterday's ticks are kept.
 
 ## Phase 2: what is built
 
@@ -95,6 +113,23 @@ Screens never touch storage directly; they use the hooks in `src/data/`, which t
 1. Hold "Parent", then reorder the 8 steps by press-and-hold drag and by the arrows.
 2. Reload the page: the order is the same.
 3. Swipe and tap across steps quickly in edit mode: nothing lifts.
+
+## Phase 3 acceptance test (on the tablet)
+
+1. Give two children a list for the current time of day, set one to "Move to bottom", tick a step on each.
+2. Leave the tablet on past midnight (or check in the morning): both lists are clean.
+
+## Phase 3: not tested yet
+
+- Not yet tried on the real tablet or phones; tested in Chromium at 1920 × 1080 and 390 px wide.
+- The soft chime has not been listened to on the tablet's speaker, and the brightness setting only dims that
+  child's column (the screen backlight is not changed).
+- Three or more children side by side on the 15.6" screen (two are tested).
+- Changing the morning / afternoon / evening times: fixed at 12:00 and 17:00 for now.
+- Moving a step between times of day is by the "⋯" menu, not by dragging between lists (that comes with the
+  brain dump in Phase 5).
+- A routine left on screen exactly as the time of day changes (for example at 12:00) switches to the next list
+  without warning; the child's view of the old list is not kept.
 
 ## Phase 2 acceptance test (do this on the real tablet and a phone)
 
