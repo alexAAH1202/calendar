@@ -35,6 +35,10 @@ describe('createBridge', () => {
   it('maps failures to plain kinds', async () => {
     const b = (f: typeof fetch) => createBridge({ url: URL, key: 'k' }, f);
     await expect(b(vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))).calendars()).rejects.toMatchObject({ kind: 'network' });
+    // The POST is blocked but Google does answer: the deployment is not open to "Anyone".
+    const blockedButUp = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValueOnce({ type: 'opaque' } as Response);
+    await expect(b(blockedButUp).calendars()).rejects.toMatchObject({ kind: 'access' });
+    expect(blockedButUp.mock.calls[1][1]).toMatchObject({ method: 'GET', mode: 'no-cors', credentials: 'omit' });
     await expect(b(ok({ ok: false, error: 'unauthorised' })).calendars()).rejects.toMatchObject({ kind: 'unauthorised' });
     await expect(b(ok({ ok: false, error: 'calendar_not_found' })).calendars()).rejects.toMatchObject({ kind: 'google' });
     const html = vi.fn().mockResolvedValue({ status: 200, json: async () => { throw new SyntaxError('<html>'); } } as unknown as Response);

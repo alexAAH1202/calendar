@@ -1,6 +1,6 @@
 import type { BridgeCalendar, BridgeSettings, CalEvent, NewEvent } from './types';
 
-export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google';
+export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access';
 
 export class BridgeError extends Error {
   constructor(public kind: BridgeErrorKind, detail = '') {
@@ -23,10 +23,27 @@ export function bridgeErrorText(kind: BridgeErrorKind): string {
       return 'Could not reach Google. Check the Wi-Fi; the wall keeps showing the last events it had.';
     case 'unauthorised':
       return 'The calendar key was not accepted. Paste the key that setup() logged in Apps Script.';
+    case 'access':
+      return 'Google answered, but would not let the app read the reply. In Apps Script, open Deploy > Manage deployments > ✏️, set Who has access to "Anyone" (not "Anyone with Google account"), choose Version: New version, Deploy, then try again. To check: open the web app address in a private window; it should show {"ok":true,…}.';
     case 'notBridge':
       return 'That address did not answer like the calendar bridge. Check the deployment is a Web app with access for "Anyone".';
     default:
       return 'Google refused the request.';
+  }
+}
+
+/**
+ * After a blocked request: offline, or Google is reachable but the reply is not readable
+ * (the deployment is not open to "Anyone", so Google sends a sign-in page instead).
+ */
+async function diagnose(url: string, fetchImpl: typeof fetch): Promise<BridgeErrorKind> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'network';
+  try {
+    // An opaque request succeeds whenever Google answers at all, whatever it answers with.
+    await fetchImpl(url, { method: 'GET', mode: 'no-cors', credentials: 'omit' });
+    return 'access';
+  } catch {
+    return 'network';
   }
 }
 
@@ -47,7 +64,7 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
         credentials: 'omit',
       });
     } catch {
-      throw new BridgeError('network');
+      throw new BridgeError(await diagnose(settings.url.trim(), fetchImpl));
     }
     let data: { ok?: boolean; error?: string } & Record<string, unknown>;
     try {
