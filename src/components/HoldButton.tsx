@@ -22,6 +22,7 @@ export function HoldButton({ holdMs = 1200, onHold, children, label }: {
     <button
       type="button"
       className="hold-btn"
+      title={`${label} (press and hold)`}
       aria-label={`${label} (press and hold)`}
       onPointerDown={start}
       onPointerUp={cancel}

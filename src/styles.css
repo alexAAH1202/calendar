@@ -1059,3 +1059,24 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
   color: var(--text);
 }
 .inline-field input[type='range'] { border: 0; padding: 0; background: transparent; accent-color: var(--primary); }
+
+/* Header: tabs take the free space and scroll if they must; the round controls stay together on the right. */
+.screen-header { flex-wrap: nowrap; }
+.screen-header .tabs--icons { flex: 1 1 auto; min-width: 0; overflow-x: auto; justify-content: center; }
+.header-controls { flex: none; display: flex; align-items: center; gap: 10px; }
+.mode-pill { font-size: 28px; padding: 0; }
+.hold-btn { min-width: var(--touch); min-height: var(--touch); padding: 0; font-size: 28px; border-radius: 50%; background: var(--pill); color: var(--text); }
+@media (max-width: 640px) {
+  .screen-header { flex-wrap: wrap; }
+  .screen-header .tabs--icons { justify-content: flex-start; }
+}
+@media (max-width: 1500px) and (min-width: 641px) {
+  .screen-header h1 { font-size: 32px; }
+  .tabs--icons .tab { min-width: 80px; padding: 6px 8px; }
+  .tabs--icons .tab-icon { font-size: 28px; }
+  .tabs--icons .tab-label { font-size: 16px; }
+}
+@media (max-width: 1100px) and (min-width: 641px) {
+  .screen-header { flex-wrap: wrap; }
+  .screen-header .tabs--icons { order: 3; flex-basis: 100%; }
+}

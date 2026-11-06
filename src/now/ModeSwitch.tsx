@@ -12,8 +12,9 @@ export function ModeSwitch({ mode, onChange }: { mode: DayMode; onChange: (m: Da
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={`pill mode-pill mode-pill--${mode}`} onClick={() => setOpen(true)} aria-haspopup="dialog">
-        <span aria-hidden="true">{MODE_ICONS[mode]}</span> {MODE_LABELS[mode]}
+      <button type="button" className={`pill pill--round mode-pill mode-pill--${mode}`} onClick={() => setOpen(true)} aria-haspopup="dialog"
+        title={`${MODE_LABELS[mode]}: tap to change`} aria-label={`${MODE_LABELS[mode]}. Change how today is going`}>
+        <span aria-hidden="true">{MODE_ICONS[mode]}</span>
       </button>
       {open && (
         <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>

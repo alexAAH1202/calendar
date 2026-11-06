@@ -112,15 +112,18 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'week', label: 'Week', icon: '🗓️' },
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
-        <ModeSwitch mode={dayMode.mode} onChange={dayMode.set} />
-        {isPhone && updateReady && (
-          <button type="button" className="pill" onClick={() => void reloadApp()}>Update ready</button>
-        )}
-        {isPhone ? (
-          <button type="button" className="pill pill--round" aria-label="Parent: set up the app" onClick={() => setSetup(true)}>⚙️</button>
-        ) : (
-          <HoldButton label="Parent: set up the app" onHold={() => setSetup(true)}>Parent</HoldButton>
-        )}
+        <div className="header-controls">
+          <ModeSwitch mode={dayMode.mode} onChange={dayMode.set} />
+          {isPhone && updateReady && (
+            <button type="button" className="pill pill--round" title="Update ready: tap to load" aria-label="Update ready: tap to load"
+              onClick={() => void reloadApp()}>⬆️</button>
+          )}
+          {isPhone ? (
+            <button type="button" className="pill pill--round" title="Parent: set up the app" aria-label="Parent: set up the app" onClick={() => setSetup(true)}>⚙️</button>
+          ) : (
+            <HoldButton label="Parent: set up the app" onHold={() => setSetup(true)}>⚙️</HoldButton>
+          )}
+        </div>
       </header>
       <ModeBanner mode={dayMode.mode} />
 
