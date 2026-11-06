@@ -1,6 +1,12 @@
 import { registerSW } from 'virtual:pwa-register';
 
-/** The service worker: caches the app so the wall opens offline, and says when a new version is ready. */
+/**
+ * The service worker: caches the app so the wall opens offline, and says when a new version is ready.
+ * A new version found while the app is just opening (or after a reload) is loaded straight away, since
+ * nobody is in the middle of anything yet. One that arrives while the app is in use waits: the wall loads
+ * it at the nightly reload, phones show "Update ready", Parent → Wall has a button.
+ */
+const JUST_OPENED_MS = 20_000;
 let needRefresh = false;
 const listeners = new Set<() => void>();
 let update: (reload?: boolean) => Promise<void> = async () => window.location.reload();
@@ -11,6 +17,10 @@ export function startPwa(): void {
     immediate: true,
     onNeedRefresh() {
       needRefresh = true;
+      if (performance.now() < JUST_OPENED_MS) {
+        void update(true);
+        return;
+      }
       listeners.forEach((l) => l());
     },
   });
