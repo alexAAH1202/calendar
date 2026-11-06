@@ -6,16 +6,24 @@ import { beforeEach, describe, expect, it } from 'vitest';
 const KEY = 'k'.repeat(64);
 const code = readFileSync('apps-script/Code.gs', 'utf8');
 
-interface FakeEvent { title: string; start: Date; end: Date; allDay?: boolean; creators?: string[]; location?: string }
+interface FakeEvent { id?: string; title: string; start: Date; end: Date; allDay?: boolean; creators?: string[]; location?: string; recurring?: boolean }
 
 function load(props: Record<string, string> = { BRIDGE_KEY: KEY }) {
   const created: unknown[] = [];
   const events: FakeEvent[] = [
-    { title: 'Swimming', start: new Date('2026-11-07T22:00:00Z'), end: new Date('2026-11-07T23:00:00Z'), creators: ['Alex@Example.com'] },
-    { title: 'School holidays', start: new Date('2026-12-17T13:00:00Z'), end: new Date('2026-12-19T13:00:00Z'), allDay: true },
+    { id: 'ev0@google.com', title: 'Swimming', start: new Date('2026-11-07T22:00:00Z'), end: new Date('2026-11-07T23:00:00Z'), creators: ['Alex@Example.com'] },
+    { id: 'ev1@google.com', title: 'School holidays', start: new Date('2026-12-17T13:00:00Z'), end: new Date('2026-12-19T13:00:00Z'), allDay: true },
+    { id: 'ev2@google.com', title: 'Piano', start: new Date('2026-11-08T06:00:00Z'), end: new Date('2026-11-08T07:00:00Z'), recurring: true },
   ];
   const toEvent = (e: FakeEvent, i: number) => ({
-    getId: () => `ev${i}@google.com`,
+    getId: () => e.id ?? `ev${i}@google.com`,
+    isRecurringEvent: () => !!e.recurring,
+    setTitle: (t: string) => { e.title = t; },
+    setLocation: (l: string) => { e.location = l; },
+    setTime: (a: Date, b: Date) => { e.start = a; e.end = b; e.allDay = false; },
+    setAllDayDate: (d: Date) => { e.start = d; e.end = new Date(d.getTime() + 86400000); e.allDay = true; },
+    setAllDayDates: (a: Date, b: Date) => { e.start = a; e.end = b; e.allDay = true; },
+    deleteEvent: () => { events.splice(events.indexOf(e), 1); },
     getTitle: () => e.title,
     getLocation: () => e.location ?? '',
     getCreators: () => e.creators ?? [],
@@ -73,7 +81,7 @@ function load(props: Record<string, string> = { BRIDGE_KEY: KEY }) {
   vm.runInContext(code, sandbox);
   const post = (body: unknown) =>
     JSON.parse((sandbox as unknown as { doPost: (e: unknown) => { text: string } }).doPost({ postData: { contents: JSON.stringify(body) } }).text);
-  return { sandbox: sandbox as unknown as Record<string, () => unknown>, post, created, props };
+  return { sandbox: sandbox as unknown as Record<string, () => unknown>, post, created, props, events };
 }
 
 let b: ReturnType<typeof load>;
@@ -135,6 +143,62 @@ describe('Code.gs bridge', () => {
     expect(b.post({ ...base, title: 'X' }).error).toBe('bad_time');
     expect(b.post({ ...base, title: 'X', calendarId: 'nope', start: 1, end: 2 }).error).toBe('calendar_not_found');
     expect(b.created).toHaveLength(0);
+  });
+
+  const FAM = 'family@group.calendar.google.com';
+
+  it('reports its version, so the wall can tell an out-of-date script', () => {
+    expect(b.post({ action: 'version', key: KEY })).toEqual({ ok: true, version: 2 });
+  });
+
+  it('lists the raw event id and whether it repeats', () => {
+    const res = b.post({ action: 'events', key: KEY, calendarIds: [FAM], from: Date.parse('2026-11-01T00:00:00Z'), to: Date.parse('2026-11-30T00:00:00Z') });
+    expect(res.events.map((e: { eventId: string; recurring: boolean }) => [e.eventId, e.recurring])).toEqual([['ev0@google.com', false], ['ev2@google.com', true]]);
+  });
+
+  it('updates one timed event: title, place, time', () => {
+    const res = b.post({ action: 'update', key: KEY, calendarId: FAM, fromCalendarId: FAM, eventId: 'ev0@google.com',
+      occurrence: Date.parse('2026-11-07T22:00:00Z'), title: 'Swim squad', location: 'Aquatic centre', allDay: false,
+      start: Date.parse('2026-11-07T21:30:00Z'), end: Date.parse('2026-11-07T22:30:00Z') });
+    expect(res).toMatchObject({ ok: true, event: { title: 'Swim squad', location: 'Aquatic centre', start: Date.parse('2026-11-07T21:30:00Z') } });
+    expect(b.events[0]).toMatchObject({ title: 'Swim squad' });
+  });
+
+  it('turns a timed event into an all-day one', () => {
+    const res = b.post({ action: 'update', key: KEY, calendarId: FAM, fromCalendarId: FAM, eventId: 'ev0@google.com',
+      occurrence: Date.parse('2026-11-07T22:00:00Z'), title: 'Swim carnival', allDay: true, startDate: '2026-11-08', endDate: '2026-11-09' });
+    expect(res.event).toMatchObject({ allDay: true, startDate: '2026-11-08', endDate: '2026-11-09' });
+  });
+
+  it('finds an all-day event by its date', () => {
+    const res = b.post({ action: 'update', key: KEY, calendarId: FAM, fromCalendarId: FAM, eventId: 'ev1@google.com',
+      occurrence: '2026-12-18', title: 'Holidays!', allDay: true, startDate: '2026-12-18', endDate: '2026-12-21' });
+    expect(res.event).toMatchObject({ title: 'Holidays!', startDate: '2026-12-18', endDate: '2026-12-21' });
+  });
+
+  it('deletes one event, and only that one', () => {
+    expect(b.post({ action: 'delete', key: KEY, calendarId: FAM, eventId: 'ev0@google.com', occurrence: Date.parse('2026-11-07T22:00:00Z') }))
+      .toEqual({ ok: true, deleted: true });
+    expect(b.events.map((e) => e.title)).toEqual(['School holidays', 'Piano']);
+  });
+
+  it('refuses repeating events, a wrong occurrence, and a missing key', () => {
+    expect(b.post({ action: 'delete', key: KEY, calendarId: FAM, eventId: 'ev2@google.com', occurrence: Date.parse('2026-11-08T06:00:00Z') }).error)
+      .toBe('recurring_event');
+    expect(b.post({ action: 'delete', key: KEY, calendarId: FAM, eventId: 'ev0@google.com', occurrence: Date.parse('2026-11-07T23:00:00Z') }).error)
+      .toBe('event_not_found');
+    expect(b.post({ action: 'delete', calendarId: FAM, eventId: 'ev0@google.com', occurrence: 1 }).error).toBe('unauthorised');
+    expect(b.events).toHaveLength(3);
+  });
+
+  it('moves an event to another calendar by re-creating it there', () => {
+    const res = b.post({ action: 'update', key: KEY, calendarId: FAM, fromCalendarId: FAM, eventId: 'ev0@google.com',
+      occurrence: Date.parse('2026-11-07T22:00:00Z'), title: 'Swimming', allDay: false,
+      start: Date.parse('2026-11-07T22:00:00Z'), end: Date.parse('2026-11-07T23:00:00Z') });
+    expect(res.ok).toBe(true); // same calendar: plain update
+    expect(b.post({ action: 'update', key: KEY, calendarId: 'nope', fromCalendarId: FAM, eventId: 'ev0@google.com',
+      occurrence: Date.parse('2026-11-07T22:00:00Z'), title: 'X', allDay: false, start: 1, end: 2 }).error).toBe('calendar_not_found');
+    expect(b.events).toHaveLength(3); // nothing deleted when the target calendar is wrong
   });
 
   it('answers bad JSON and unknown actions calmly', () => {

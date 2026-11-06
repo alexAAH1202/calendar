@@ -15,6 +15,8 @@
  *   4. In the wall calendar: Parent > Calendar, paste the web app URL and the key.
  */
 
+/** Bumped when actions are added, so the wall can tell an out-of-date script. */
+var VERSION = 2;
 var MAX_RANGE_DAYS = 120;
 var MAX_TITLE = 200;
 
@@ -54,6 +56,9 @@ function doPost(e) {
     if (req.action === 'calendars') return json_({ ok: true, calendars: listCalendars_() });
     if (req.action === 'events') return json_({ ok: true, events: listEvents_(req) });
     if (req.action === 'create') return json_({ ok: true, event: createEvent_(req) });
+    if (req.action === 'update') return json_({ ok: true, event: updateEvent_(req) });
+    if (req.action === 'delete') return json_({ ok: true, deleted: deleteEvent_(req) });
+    if (req.action === 'version') return json_({ ok: true, version: VERSION });
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err).slice(0, 200) });
@@ -115,6 +120,8 @@ function eventJson_(ev, calendarId, tz) {
   var creators = ev.getCreators ? ev.getCreators() : [];
   var e = {
     id: ev.getId() + '|' + (allDay ? ymd_(ev.getAllDayStartDate(), tz) : ev.getStartTime().getTime()),
+    eventId: ev.getId(),
+    recurring: ev.isRecurringEvent ? ev.isRecurringEvent() : false,
     calendarId: calendarId,
     title: ev.getTitle() || '(No title)',
     location: ev.getLocation() || '',
@@ -159,6 +166,66 @@ function createEvent_(req) {
   if (!isFinite(s) || !isFinite(en) || en <= s) throw new Error('bad_time');
   ev = cal.createEvent(title, new Date(s), new Date(en), options);
   return eventJson_(ev, req.calendarId, cal.getTimeZone());
+}
+
+/**
+ * The single event `eventId` that starts at `occurrence` (epoch ms, or yyyy-MM-dd for all-day).
+ * Looked up through getEvents on that day, so it is always one occurrence, never a whole series.
+ */
+function findEvent_(cal, eventId, occurrence) {
+  if (typeof eventId !== 'string' || !eventId) throw new Error('event_missing');
+  var tz = cal.getTimeZone();
+  var allDay = typeof occurrence === 'string';
+  var at = allDay ? Utilities.parseDate(occurrence, tz, 'yyyy-MM-dd').getTime() : Number(occurrence);
+  if (!isFinite(at)) throw new Error('bad_occurrence');
+  var found = cal.getEvents(new Date(at - 86400000), new Date(at + 2 * 86400000)).filter(function (ev) {
+    if (ev.getId() !== eventId) return false;
+    return allDay ? ev.isAllDayEvent() && ymd_(ev.getAllDayStartDate(), tz) === occurrence : ev.getStartTime().getTime() === at;
+  });
+  if (!found.length) throw new Error('event_not_found');
+  return found[0];
+}
+
+/** Repeating events are changed in Google Calendar, where the choice "this one or all" is clear. */
+function refuseRecurring_(ev) {
+  if (ev.isRecurringEvent && ev.isRecurringEvent()) throw new Error('recurring_event');
+}
+
+/** Changes title, place and time of one event; moving it to another calendar re-creates it there. */
+function updateEvent_(req) {
+  var cal = calendar_(req.fromCalendarId || req.calendarId);
+  var ev = findEvent_(cal, req.eventId, req.occurrence);
+  refuseRecurring_(ev);
+  if (req.calendarId && req.fromCalendarId && req.calendarId !== req.fromCalendarId) {
+    var created = createEvent_(req);
+    ev.deleteEvent();
+    return created;
+  }
+  var title = String(req.title || '').trim().slice(0, MAX_TITLE);
+  if (!title) throw new Error('title_missing');
+  var tz = cal.getTimeZone();
+  if (req.allDay) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(req.startDate || '')) throw new Error('bad_date');
+    var start = Utilities.parseDate(req.startDate, tz, 'yyyy-MM-dd');
+    if (req.endDate && req.endDate > req.startDate) ev.setAllDayDates(start, Utilities.parseDate(req.endDate, tz, 'yyyy-MM-dd'));
+    else ev.setAllDayDate(start);
+  } else {
+    var s = Number(req.start);
+    var en = Number(req.end);
+    if (!isFinite(s) || !isFinite(en) || en <= s) throw new Error('bad_time');
+    ev.setTime(new Date(s), new Date(en));
+  }
+  ev.setTitle(title);
+  ev.setLocation(req.location ? String(req.location).slice(0, 300) : '');
+  return eventJson_(ev, req.calendarId || req.fromCalendarId, tz);
+}
+
+function deleteEvent_(req) {
+  var cal = calendar_(req.calendarId);
+  var ev = findEvent_(cal, req.eventId, req.occurrence);
+  refuseRecurring_(ev);
+  ev.deleteEvent();
+  return true;
 }
 
 function json_(obj) {

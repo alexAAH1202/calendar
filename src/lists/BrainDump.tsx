@@ -86,8 +86,8 @@ export function BrainDump() {
         </div>
       </div>
       <p className="panel-text">
-        Shown only when you are signed in{parents.length > 1 ? ', not on the other parent’s account' : ''}. It is hidden in the
-        app, not locked: both parents’ accounts can technically read both lists.
+        The list of the parent signed in on this device. It shows on this screen to anyone using it and is not locked;
+        {parents.length > 1 ? ' the other parent has their own on their phone, and' : ''} both parents’ accounts can technically read both lists.
       </p>
       <ListNotices list={list} />
 

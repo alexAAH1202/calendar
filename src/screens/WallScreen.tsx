@@ -1,105 +1,102 @@
 import { format } from 'date-fns';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useCalendarData } from '../calendar/CalendarContext';
-import { MonthView } from '../calendar/MonthView';
+import { CalendarView } from '../calendar/CalendarView';
 import { TodayPanel } from '../calendar/TodayPanel';
-import { WeekView } from '../calendar/WeekView';
 import { ChildBoard } from '../components/ChildBoard';
-import { ChoreBoard } from '../lists/ChoreBoard';
-import { DayAgenda } from './DayAgenda';
-import { Tabs } from '../components/Tabs';
 import { HoldButton } from '../components/HoldButton';
+import { Tabs } from '../components/Tabs';
 import { useIdleExit } from '../components/useIdleExit';
 import { useStore } from '../data/StoreContext';
 import { timeOfDayAt } from '../data/timeOfDay';
 import { usePeople } from '../data/usePeople';
 import { dayKey } from '../date/dayKey';
 import { useNow } from '../date/useNow';
-import { ParentEditor } from './ParentEditor';
+import { BrainDump } from '../lists/BrainDump';
+import { ChoresView } from '../lists/ChoresView';
+import { DayAgenda } from './DayAgenda';
+import { RoutinesView } from './RoutinesView';
+import { SetupScreen } from './SetupScreen';
 
-type WallView = 'agenda' | 'today' | 'chores' | 'week' | 'month';
+type View = 'agenda' | 'today' | 'routines' | 'chores' | 'braindump' | 'week' | 'month';
 
 interface Props {
-  /** Phones open straight into edit mode and do not time out of it. */
+  /** A parent's phone: opens on the Day list, Setup behind a plain button. */
   isPhone?: boolean;
-  /** Extra parent-only controls, such as the family panel. */
+  /** The family panel (invite, sign out), shown in Setup. */
   parentTools?: ReactNode;
 }
 
-/** The wall tablet's screen: every child's current routine, and parent mode behind a hold. */
+/**
+ * The main screen. Everything used day to day is here: today's routines and events,
+ * routines, chores, the brain dump and the calendar, with adding and changing in place.
+ * Parent (hold on the wall, ⚙️ on a phone) is only for setting the app up.
+ */
 export function WallScreen({ isPhone = false, parentTools }: Props) {
   const store = useStore();
   const now = useNow();
   const day = dayKey(now);
   const tod = timeOfDayAt(now);
   const { children, loaded } = usePeople(store);
-  const [editing, setEditing] = useState(false);
+  const [setup, setSetup] = useState(false);
   // Phones open on the family's Day list; the wall on Today.
-  const home: WallView = isPhone ? 'agenda' : 'today';
-  const [view, setView] = useState<WallView>(home);
+  const home: View = isPhone ? 'agenda' : 'today';
+  const [view, setView] = useState<View>(home);
   const [panelDay, setPanelDay] = useState<Date | null>(null);
-  const clearPanelDay = useCallback(() => setPanelDay(null), []);
   const calendar = useCalendarData();
-  const calendarReady = calendar.configured;
-  const exitEdit = useCallback(() => setEditing(false), []);
-  const backToToday = useCallback(() => setView(home), [home]);
-  useIdleExit(editing && !isPhone, exitEdit);
-  // The wall drifts back to Today after five quiet minutes on another view.
-  useIdleExit(!editing && view !== home, backToToday, 5 * 60_000);
-  // A day picked in the Today panel's week strip also goes back to today after five quiet minutes.
-  useIdleExit(!editing && panelDay !== null, clearPanelDay, 5 * 60_000);
+  const exitSetup = useCallback(() => setSetup(false), []);
+  const backHome = useCallback(() => setView(home), [home]);
+  const clearPanelDay = useCallback(() => setPanelDay(null), []);
+  // Setup closes after two quiet minutes on the wall.
+  useIdleExit(setup && !isPhone, exitSetup);
+  // The wall drifts back to Today after five quiet minutes on any other tab, editing included.
+  useIdleExit(!setup && view !== home, backHome, 5 * 60_000);
+  useIdleExit(!setup && panelDay !== null, clearPanelDay, 5 * 60_000);
 
-  const dateLine = (
-    <div>
-      <h1>{format(now, 'EEEE d MMMM')}</h1>
-    </div>
-  );
+  const dateLine = <h1>{format(now, 'EEEE d MMMM')}</h1>;
 
   if (!loaded || !calendar.known) return <main className="screen screen--child"><p className="hint">Loading…</p></main>;
 
-  if (editing) {
-    return (
-      <ParentEditor people={children} currentTod={tod} parentTools={parentTools}
-        onExit={exitEdit} header={dateLine} now={now} />
-    );
-  }
+  if (setup) return <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine} />;
 
-  const wide = calendarReady || children.length > 1 || view === 'chores';
+  const childView = view === 'today' || view === 'agenda';
   return (
-    <main className={`screen screen--child ${wide ? 'screen--wide' : ''}`}>
+    <main className={`screen ${childView ? 'screen--child' : ''} screen--wide`}>
       <header className="screen-header">
         {dateLine}
-        <Tabs<WallView> label="View" value={view} onChange={setView} withIcons
+        <Tabs<View> label="View" value={view} onChange={setView} withIcons
           options={[
-            ...(isPhone ? [{ value: 'agenda' as const, label: 'Day', icon: '📋' }] : []),
-            { value: 'today', label: isPhone ? 'Routines' : 'Today', icon: '☀️' },
+            isPhone ? { value: 'agenda', label: 'Day', icon: '📋' } : { value: 'today', label: 'Today', icon: '☀️' },
+            { value: 'routines', label: 'Routines', icon: '✅' },
             { value: 'chores', label: 'Chores', icon: '🧹' },
-            ...(calendarReady
-              ? [{ value: 'week' as const, label: 'Week', icon: '🗓️' }, { value: 'month' as const, label: 'Month', icon: '📅' }]
-              : []),
+            { value: 'braindump', label: 'Brain dump', icon: '💭' },
+            { value: 'week', label: 'Week', icon: '🗓️' },
+            { value: 'month', label: 'Month', icon: '📅' },
           ]} />
-        {!isPhone && <HoldButton label="Parent edit mode" onHold={() => setEditing(true)}>Parent</HoldButton>}
+        {isPhone ? (
+          <button type="button" className="pill pill--round" aria-label="Parent: set up the app" onClick={() => setSetup(true)}>⚙️</button>
+        ) : (
+          <HoldButton label="Parent: set up the app" onHold={() => setSetup(true)}>Parent</HoldButton>
+        )}
       </header>
+
       {view === 'agenda' ? (
         <DayAgenda children={children} now={now} />
+      ) : view === 'routines' ? (
+        <RoutinesView children={children} currentTod={tod} />
       ) : view === 'chores' ? (
-        <ChoreBoard children={children} day={day} />
-      ) : view === 'week' && calendarReady ? (
-        <WeekView now={now} anchor={now} />
-      ) : view === 'month' && calendarReady ? (
-        <MonthView now={now} anchor={now} />
-      ) : calendarReady ? (
+        <ChoresView children={children} day={day} />
+      ) : view === 'braindump' ? (
+        <section className="edit-surface" aria-label="Brain dump"><BrainDump /></section>
+      ) : view === 'week' || view === 'month' ? (
+        <CalendarView key={view} now={now} mode={view} />
+      ) : calendar.configured ? (
         <div className="today-layout">
           <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
           <ChildBoard children={children} day={day} tod={tod} />
         </div>
       ) : (
         <ChildBoard children={children} day={day} tod={tod} />
-      )}
-      {isPhone && (
-        <button type="button" className="fab" aria-label="Edit: add and change routines, chores and events" onClick={() => setEditing(true)}>
-          +
-        </button>
       )}
     </main>
   );

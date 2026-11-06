@@ -1,6 +1,11 @@
 /** One event as the bridge returns it. */
 export interface CalEvent {
+  /** Google's event id plus the occurrence start: unique per occurrence. */
   id: string;
+  /** Google's own event id (missing from an out-of-date bridge script). */
+  eventId?: string;
+  /** Part of a repeating series: changed in Google Calendar, not from the wall. */
+  recurring?: boolean;
   calendarId: string;
   title: string;
   location: string;
@@ -54,4 +59,9 @@ export interface NewEvent {
   end?: number;
   startDate?: string;
   endDate?: string;
+}
+
+/** Which occurrence to change: the start in ms, or the start date for all-day events. */
+export function occurrenceOf(e: CalEvent): number | string {
+  return e.allDay ? e.startDate! : e.start!;
 }

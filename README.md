@@ -42,6 +42,22 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Main screen and Parent (after Phase 5)
+
+- **Everything used day to day is on the main screen**, as tabs: Today (Day on phones), Routines, Chores,
+  Brain dump, Week, Month. Ticking, adding, changing and deleting happen there. Editing areas have a lavender
+  background so it is clear when you are changing things; deletes need a second tap and most lists have Undo.
+  The wall goes back to Today after five quiet minutes on any other tab.
+- **Parent** (hold on the wall, ⚙️ on a phone) is only for setting the app up: Children (add, remove, name,
+  colour, sensory settings), Calendar (the Apps Script connection, which calendars), Family (invite, sign out).
+- This changes the spec's "child view shows no editing controls": the wall's tabs can be tapped by anyone.
+  Today stays a tick-only view.
+- **Calendar events can be added, changed and deleted**: Week tab (+ Event, tap an event), Month tab (tap a date
+  to add), and the phone's Day list. Changing title, place, date, times, all day or several days, or moving it to
+  another calendar. Repeating events and calendars not marked "Parents can add events here" open read-only, with
+  the reason. Needs the Apps Script at version 2 (see `apps-script/README.md`); an older script gets a message
+  saying to update it.
+
 ## Look and feel (after Phase 5)
 
 - Soft gradient header, rounded Nunito font (bundled in the app, OFL licence, works offline), pill buttons,

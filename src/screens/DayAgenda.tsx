@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCalendarData } from '../calendar/CalendarContext';
 import { eventsOn } from '../calendar/dates';
 import { EventItem } from '../calendar/EventItem';
+import { EventSheet, type SheetTarget } from '../calendar/EventSheet';
 import { seedFor } from '../components/ChildColumn';
 import { Avatar } from '../components/Avatar';
 import { ChildStep } from '../components/ChildStep';
@@ -36,6 +37,7 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
   const cal = useCalendarData();
   const { parents } = useFamilyInfo();
   const [selected, setSelected] = useState(now);
+  const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const today = dayKey(now);
   const key = dayKey(selected);
   const isToday = isSameDay(selected, now);
@@ -100,15 +102,21 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
 
       {cal.configured && (
         <>
-          <h2 className="agenda-heading">Calendar</h2>
+          <div className="agenda-heading-row">
+            <h2 className="agenda-heading">Calendar</h2>
+            <button type="button" className="pill" onClick={() => setSheet({ kind: 'new', day: key })}>+ Event</button>
+          </div>
           {events.length ? (
-            <ul className="events">{events.map((e) => <EventItem key={e.id} event={e} day={key} />)}</ul>
+            <ul className="events">
+              {events.map((e) => <EventItem key={e.id} event={e} day={key} onEdit={(ev) => setSheet({ kind: 'edit', event: ev })} />)}
+            </ul>
           ) : (
             <p className="hint">Nothing on the calendar.</p>
           )}
         </>
       )}
 
+      {sheet && <EventSheet target={sheet} onClose={() => setSheet(null)} />}
       {!loaded ? <p className="hint">Loading…</p> : (
         <>
           <h2 className="agenda-heading">{isToday ? 'To do' : 'Chores due'}</h2>

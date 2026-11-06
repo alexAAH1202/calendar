@@ -16,6 +16,25 @@ describe('validBridgeUrl', () => {
   });
 });
 
+describe('update and delete', () => {
+  const ev = { id: 'x|1', eventId: 'x@google.com', calendarId: 'fam', title: 'Swim', location: '', creator: '', allDay: false, start: 1000, end: 2000 };
+  it('sends the event id and the occurrence', async () => {
+    const f = ok({ ok: true, event: ev });
+    await createBridge({ url: URL, key: 'k' }, f).update(ev, { calendarId: 'fam', title: 'Swim', allDay: false, start: 1500, end: 2500 });
+    expect(JSON.parse(f.mock.calls[0][1].body)).toMatchObject({ action: 'update', eventId: 'x@google.com', occurrence: 1000, fromCalendarId: 'fam', start: 1500 });
+    const g = ok({ ok: true, deleted: true });
+    await createBridge({ url: URL, key: 'k' }, g).remove({ ...ev, allDay: true, startDate: '2026-11-09', start: undefined });
+    expect(JSON.parse(g.mock.calls[0][1].body)).toMatchObject({ action: 'delete', occurrence: '2026-11-09' });
+  });
+  it('explains an out-of-date script, a repeating event and one already gone', async () => {
+    const b = (body: unknown) => createBridge({ url: URL, key: 'k' }, ok(body));
+    await expect(b({ ok: false, error: 'unknown_action' }).remove(ev)).rejects.toMatchObject({ kind: 'outdated' });
+    await expect(b({ ok: true }).remove({ ...ev, eventId: undefined })).rejects.toMatchObject({ kind: 'outdated' });
+    await expect(b({ ok: false, error: 'recurring_event' }).remove(ev)).rejects.toMatchObject({ kind: 'recurring' });
+    await expect(b({ ok: false, error: 'event_not_found' }).remove(ev)).rejects.toMatchObject({ kind: 'gone' });
+  });
+});
+
 describe('createBridge', () => {
   it('posts plain-text JSON with the key and no cookies', async () => {
     const f = ok({ ok: true, calendars: [] });

@@ -31,6 +31,10 @@ no such limit, so the wall keeps showing new events without anyone touching it. 
 
 ## Updating the script later
 
+**Version 2 (adds changing and deleting events):** open the script, select all of the old code, paste the new
+[`Code.gs`](./Code.gs) over it, Save, then follow the steps below. Your key stays the same.
+
+
 Use **Deploy > Manage deployments > ✏️ (edit) > Version: New version > Deploy**. That keeps the same URL.
 A *new deployment* makes a new URL, which you would then have to paste into the wall again.
 

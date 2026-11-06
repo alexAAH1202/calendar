@@ -1,6 +1,6 @@
-import type { BridgeCalendar, BridgeSettings, CalEvent, NewEvent } from './types';
+import { occurrenceOf, type BridgeCalendar, type BridgeSettings, type CalEvent, type NewEvent } from './types';
 
-export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access';
+export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access' | 'outdated' | 'recurring' | 'gone';
 
 export class BridgeError extends Error {
   constructor(public kind: BridgeErrorKind, detail = '') {
@@ -25,6 +25,12 @@ export function bridgeErrorText(kind: BridgeErrorKind): string {
       return 'The calendar key was not accepted. Paste the key that setup() logged in Apps Script.';
     case 'access':
       return 'Google answered, but would not let the app read the reply. In Apps Script, open Deploy > Manage deployments > ✏️, set Who has access to "Anyone" (not "Anyone with Google account"), choose Version: New version, Deploy, then try again. To check: open the web app address in a private window; it should show {"ok":true,…}.';
+    case 'outdated':
+      return 'The Apps Script needs updating to change or delete events. Paste the latest Code.gs, then Deploy > Manage deployments > ✏️ > Version: New version > Deploy. The address stays the same.';
+    case 'recurring':
+      return 'This is a repeating event. Change or delete it in Google Calendar, where you can choose this one or all of them.';
+    case 'gone':
+      return 'That event was already changed or deleted in Google. The list has been refreshed.';
     case 'notBridge':
       return 'That address did not answer like the calendar bridge. Check the deployment is a Web app with access for "Anyone".';
     default:
@@ -74,6 +80,9 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
     }
     if (data.ok) return data as T;
     if (data.error === 'unauthorised') throw new BridgeError('unauthorised');
+    if (data.error === 'unknown_action') throw new BridgeError('outdated');
+    if (data.error === 'recurring_event') throw new BridgeError('recurring');
+    if (data.error === 'event_not_found') throw new BridgeError('gone');
     throw new BridgeError('google', String(data.error ?? 'unknown'));
   }
 
@@ -82,6 +91,22 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
     events: async (calendarIds: string[], from: number, to: number) =>
       (await call<{ events: CalEvent[] }>('events', { calendarIds, from, to })).events,
     create: async (event: NewEvent) => (await call<{ event: CalEvent }>('create', { ...event })).event,
+    /** Changes one occurrence; a different calendarId moves it there. */
+    update: async (original: CalEvent, changes: NewEvent) => {
+      if (!original.eventId) throw new BridgeError('outdated');
+      return (
+        await call<{ event: CalEvent }>('update', {
+          ...changes,
+          fromCalendarId: original.calendarId,
+          eventId: original.eventId,
+          occurrence: occurrenceOf(original),
+        })
+      ).event;
+    },
+    remove: async (original: CalEvent) => {
+      if (!original.eventId) throw new BridgeError('outdated');
+      await call('delete', { calendarId: original.calendarId, eventId: original.eventId, occurrence: occurrenceOf(original) });
+    },
   };
 }
 

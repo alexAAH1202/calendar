@@ -4,9 +4,10 @@ import { useCalendarData } from './CalendarContext';
 import { CalendarStatusLine } from './CalendarStatusLine';
 import { eventsOn, weekDays } from './dates';
 import { EventItem } from './EventItem';
+import type { CalEvent } from './types';
 
 /** Monday to Sunday as seven columns of events. */
-export function WeekView({ now, anchor }: { now: Date; anchor: Date }) {
+export function WeekView({ now, anchor, onEdit }: { now: Date; anchor: Date; onEdit?: (e: CalEvent) => void }) {
   const cal = useCalendarData();
   return (
     <section aria-label="Week">
@@ -21,7 +22,7 @@ export function WeekView({ now, anchor }: { now: Date; anchor: Date }) {
                 {isSameDay(d, now) && <span className="visually-hidden"> (today)</span>}
               </h3>
               {list.length ? (
-                <ul className="events">{list.map((e) => <EventItem key={e.id} event={e} day={key} compact />)}</ul>
+                <ul className="events">{list.map((e) => <EventItem key={e.id} event={e} day={key} compact onEdit={onEdit} />)}</ul>
               ) : (
                 <p className="hint hint--small">Free</p>
               )}

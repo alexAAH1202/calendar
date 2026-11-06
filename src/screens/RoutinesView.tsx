@@ -1,10 +1,5 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
-import { CalendarSection } from '../calendar/CalendarSection';
-import { BrainDump } from '../lists/BrainDump';
-import { ChoresSection } from '../lists/ChoresSection';
-import { dayKey } from '../date/dayKey';
+import { useState, type FormEvent } from 'react';
 import { seedFor } from '../components/ChildColumn';
-import { ChildSettings } from '../components/ChildSettings';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { EditList } from '../components/EditList';
 import { DEFAULT_EMOJI } from '../components/emoji';
@@ -14,126 +9,33 @@ import { SyncNotices } from '../components/SyncNotices';
 import { Tabs } from '../components/Tabs';
 import { TemplatesPanel } from '../components/TemplatesPanel';
 import { newId } from '../data/ids';
-import { PERSON_COLOURS } from '../data/profile';
 import { useStore } from '../data/StoreContext';
 import { TIME_LABELS, routineId } from '../data/timeOfDay';
 import { TIMES_OF_DAY, type Person, type TimeOfDay } from '../data/types';
 import { useRoutineSet } from '../data/useRoutineSet';
 import { useTemplates } from '../data/useTemplates';
 
-type Panel = 'none' | 'settings' | 'templates' | 'family';
-
-interface Props {
-  people: Person[];
-  currentTod: TimeOfDay;
-  parentTools?: ReactNode;
-  onExit: () => void;
-  header: ReactNode;
-  now: Date;
-}
-
-type Section = 'routines' | 'chores' | 'braindump' | 'calendar';
-
-/** Parent mode: choose a child and a time of day, then edit that list. */
-export function ParentEditor({ people, currentTod, parentTools, onExit, header, now }: Props) {
-  const store = useStore();
-  const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
-  const [panel, setPanel] = useState<Panel>('none');
-  const [section, setSection] = useState<Section>('routines');
-  const [pendingId, setPendingId] = useState<string>();
-  const found = people.find((p) => p.id === childId);
-  // A just-added child appears once saved; until then never fall back to (and edit) another child.
-  const waitingForNew = !found && childId !== undefined && childId === pendingId;
-  const child = found ?? (waitingForNew ? undefined : people[0]);
-
-  const addChild = () => {
-    const used = new Set(people.map((p) => p.colour));
-    const person: Person = {
-      id: newId('p'),
-      name: 'New child',
-      role: 'child',
-      colour: PERSON_COLOURS.find((c) => !used.has(c)) ?? PERSON_COLOURS[0],
-      order: Math.max(0, ...people.map((p) => p.order ?? 0)) + 1,
-      sensory: {},
-    };
-    void store.savePerson(person);
-    setPendingId(person.id);
-    setChildId(person.id);
-    setPanel('settings');
-  };
-
-  const toggle = (p: Panel) => setPanel((cur) => (cur === p ? 'none' : p));
-
+/** The Routines tab: pick a child and a time of day, then change that list. */
+export function RoutinesView({ children, currentTod }: { children: Person[]; currentTod: TimeOfDay }) {
+  const [childId, setChildId] = useState<string | undefined>(children[0]?.id);
+  const child = children.find((p) => p.id === childId) ?? children[0];
+  if (!child) return <p className="hint">Add a child in Parent → Children first.</p>;
   return (
-    <main className="screen screen--edit">
-      <header className="screen-header">
-        {header}
-        <div className="toolbar">
-          {parentTools && (
-            <button type="button" className="btn" aria-expanded={panel === 'family'} onClick={() => toggle('family')}>
-              Family
-            </button>
-          )}
-          <button type="button" className="btn btn--primary" onClick={onExit}>Done</button>
-        </div>
-      </header>
-      {panel === 'family' && parentTools}
-
+    <section className="edit-surface" aria-label="Routines">
       <div className="editor-row">
-        <Tabs<Section> label="Section" value={section} onChange={setSection} withIcons
-          options={[
-            { value: 'routines', label: 'Routines', icon: '☀️' },
-            { value: 'chores', label: 'Chores', icon: '🧹' },
-            { value: 'braindump', label: 'Brain dump', icon: '💭' },
-            { value: 'calendar', label: 'Calendar', icon: '📅' },
-          ]} />
+        <Tabs label="Child" value={child.id} onChange={setChildId}
+          options={children.map((p) => ({ value: p.id, label: <>{p.avatar && <StepImage image={p.avatar} />} {p.name}</> }))} />
       </div>
-
-      {section === 'calendar' ? (
-        <CalendarSection now={now} />
-      ) : section === 'chores' ? (
-        <ChoresSection children={people} today={dayKey(now)} />
-      ) : section === 'braindump' ? (
-        <BrainDump />
-      ) : (
-        <>
-          <div className="editor-row">
-            <Tabs label="Child" value={child?.id ?? ''} onChange={(id) => setChildId(id)}
-              options={people.map((p) => ({
-                value: p.id,
-                label: <>{p.avatar && <StepImage image={p.avatar} />} {p.name}</>,
-              }))} />
-            <button type="button" className="btn" onClick={addChild}>+ Add child</button>
-          </div>
-          {waitingForNew ? (
-            <p className="hint">Adding…</p>
-          ) : child ? (
-            <ChildEditor key={child.id} child={child} currentTod={currentTod} panel={panel} onTogglePanel={toggle}
-              canDelete={people.length > 1}
-              onDeleted={() => {
-                setChildId(people.find((p) => p.id !== child.id)?.id);
-                setPanel('none');
-              }} />
-          ) : (
-            <p className="hint">Add a child to start.</p>
-          )}
-        </>
-      )}
-    </main>
+      <RoutineEditor key={child.id} child={child} currentTod={currentTod} />
+    </section>
   );
 }
 
 type Picking = { kind: 'new' } | { kind: 'step'; id: string } | null;
 
-function ChildEditor({ child, currentTod, panel, onTogglePanel, canDelete, onDeleted }: {
-  child: Person;
-  currentTod: TimeOfDay;
-  panel: Panel;
-  onTogglePanel: (p: Panel) => void;
-  canDelete: boolean;
-  onDeleted: () => void;
-}) {
+function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeOfDay }) {
   const store = useStore();
+  const [showTemplates, setShowTemplates] = useState(false);
   const templates = useTemplates(store);
   const [tod, setTod] = useState<TimeOfDay>(currentTod);
   const set = useRoutineSet(store, TIMES_OF_DAY.map((t) => seedFor(child.id, t)));
@@ -169,23 +71,13 @@ function ChildEditor({ child, currentTod, panel, onTogglePanel, canDelete, onDel
           }))} />
         <div className="toolbar">
           <button type="button" className="btn" onClick={set.undo} disabled={!set.canUndo}>Undo</button>
-          <button type="button" className="btn" aria-expanded={panel === 'templates'} onClick={() => onTogglePanel('templates')}>
+          <button type="button" className="btn" aria-expanded={showTemplates} onClick={() => setShowTemplates((s) => !s)}>
             Templates
-          </button>
-          <button type="button" className="btn" aria-expanded={panel === 'settings'} onClick={() => onTogglePanel('settings')}>
-            {child.name}’s settings
           </button>
         </div>
       </div>
 
-      {panel === 'settings' && (
-        <ChildSettings person={child} canDelete={canDelete} onChange={(c) => void store.updatePerson(child.id, c)}
-          onDelete={() => {
-            void store.deletePerson(child.id, TIMES_OF_DAY.map((t) => routineId(child.id, t)));
-            onDeleted();
-          }} />
-      )}
-      {panel === 'templates' && (
+      {showTemplates && (
         <TemplatesPanel templates={templates} tod={tod} currentSteps={steps} listName={listName}
           onApply={(t, mode) => set.applyTemplate(rid, t.steps, mode)}
           onSave={(name) => void store.saveTemplate({ id: newId('t'), name, timeOfDay: tod, steps })}

@@ -109,6 +109,34 @@ export function useCalendar(store: FamilyStore) {
     [bridge, refresh],
   );
 
+  /** Changes one event; shows the change at once, then refreshes from Google. */
+  const update = useCallback(
+    async (original: CalEvent, changes: NewEvent) => {
+      if (!bridge) throw new BridgeError('notBridge');
+      try {
+        const saved = await bridge.update(original, changes);
+        setEvents((list) => [...list.filter((e) => e.id !== original.id), saved]);
+        return saved;
+      } finally {
+        void refresh();
+      }
+    },
+    [bridge, refresh],
+  );
+
+  const remove = useCallback(
+    async (original: CalEvent) => {
+      if (!bridge) throw new BridgeError('notBridge');
+      try {
+        await bridge.remove(original);
+        setEvents((list) => list.filter((e) => e.id !== original.id));
+      } finally {
+        void refresh();
+      }
+    },
+    [bridge, refresh],
+  );
+
   const byGoogleId = useMemo(() => new Map(calendars.map((c) => [c.googleId, c])), [calendars]);
   /** Who added an event to the shared calendar, as a first name when known. */
   const addedBy = useCallback(
@@ -132,6 +160,8 @@ export function useCalendar(store: FamilyStore) {
     status,
     refresh,
     create,
+    update,
+    remove,
     bridge,
   };
 }
