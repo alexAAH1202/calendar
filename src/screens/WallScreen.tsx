@@ -18,6 +18,10 @@ import { DayAgenda } from './DayAgenda';
 import { RoutinesView } from './RoutinesView';
 import { SetupScreen } from './SetupScreen';
 import { ColesButton } from '../wall/ColesButton';
+import { DayModeContext } from '../now/DayModeContext';
+import { ModeBanner, ModeSwitch } from '../now/ModeSwitch';
+import { UpNextBar } from '../now/UpNextBar';
+import { useDayMode } from '../now/useDayMode';
 import { inSleepWindow } from '../wall/schedule';
 import { SleepScreen } from '../wall/SleepScreen';
 import { reloadApp } from '../wall/pwa';
@@ -48,9 +52,11 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const tod = timeOfDayAt(now);
   const { children, loaded } = usePeople(store);
   const [setup, setSetup] = useState(false);
-  // Phones open on the family's Day list; the wall on Today.
+  // Phones open on the family's Day list; the wall on Today. A home-screen shortcut can open another tab
+  // (?view=braindump&capture=1 opens the brain dump ready to type).
   const home: View = isPhone ? 'agenda' : 'today';
-  const [view, setView] = useState<View>(home);
+  const [view, setView] = useState<View>(() => startView() ?? home);
+  const dayMode = useDayMode(store, day);
   const [panelDay, setPanelDay] = useState<Date | null>(null);
   const calendar = useCalendarData();
   const exitSetup = useCallback(() => setSetup(false), []);
@@ -67,6 +73,8 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   // Woken during sleep time: sleeps again after two quiet minutes.
   useIdleExit(sleepTime && awake, sleepAgain);
   const updateReady = useUpdateReady();
+  // Opened from the "Add to brain dump" shortcut: the input is focused, once.
+  const [capturing] = useState(() => new URLSearchParams(window.location.search).has('capture'));
   // Setup closes after two quiet minutes on the wall.
   useIdleExit(setup && !isPhone, exitSetup);
   // The wall drifts back to Today after five quiet minutes on any other tab, editing included.
@@ -88,6 +96,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
 
   const childView = view === 'today' || view === 'agenda';
   return (
+    <DayModeContext.Provider value={dayMode.mode}>
     <main className={`screen ${childView ? 'screen--child' : ''} screen--wide`}>
       <header className="screen-header">
         {dateLine}
@@ -100,6 +109,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'week', label: 'Week', icon: '🗓️' },
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
+        <ModeSwitch mode={dayMode.mode} onChange={dayMode.set} />
         {isPhone && updateReady && (
           <button type="button" className="pill" onClick={() => void reloadApp()}>Update ready</button>
         )}
@@ -109,6 +119,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
           <HoldButton label="Parent: set up the app" onHold={() => setSetup(true)}>Parent</HoldButton>
         )}
       </header>
+      <ModeBanner mode={dayMode.mode} />
 
       {view === 'agenda' ? (
         <DayAgenda children={children} now={now} />
@@ -121,18 +132,30 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
           <div className="editor-row editor-row--end">
             <ColesButton />
           </div>
-          <BrainDump />
+          <BrainDump capture={capturing} />
         </section>
       ) : view === 'week' || view === 'month' ? (
         <CalendarView key={view} now={now} mode={view} />
       ) : calendar.configured ? (
-        <div className="today-layout">
-          <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
-          <ChildBoard children={children} day={day} tod={tod} />
-        </div>
+        <>
+          <UpNextBar now={now} />
+          <div className="today-layout">
+            <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
+            <ChildBoard children={children} day={day} tod={tod} now={now} />
+          </div>
+        </>
       ) : (
-        <ChildBoard children={children} day={day} tod={tod} />
+        <ChildBoard children={children} day={day} tod={tod} now={now} />
       )}
     </main>
+    </DayModeContext.Provider>
   );
+}
+
+const VIEWS: View[] = ['agenda', 'today', 'routines', 'chores', 'braindump', 'week', 'month'];
+
+/** The tab asked for by a home-screen shortcut (?view=…), if any. */
+function startView(): View | undefined {
+  const v = new URLSearchParams(window.location.search).get('view');
+  return VIEWS.includes(v as View) ? (v as View) : undefined;
 }

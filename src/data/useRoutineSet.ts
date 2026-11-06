@@ -11,6 +11,7 @@ type Changes = Record<string, Step[]>;
 const withoutEmpty = (s: Step): Step => {
   const out = { ...s };
   if (!out.timerSeconds) delete out.timerSeconds;
+  if (!out.essential) delete out.essential;
   return out;
 };
 const sameSteps = (a: Step[], b: Step[]) => JSON.stringify(a) === JSON.stringify(b);
@@ -113,8 +114,18 @@ export function useRoutineSet(store: FamilyStore, seeds: Routine[]) {
     setEmoji: (rid: string, id: string, emoji: string) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? { ...s, image: `emoji:${emoji}` } : s))),
     /** Changes a step's timer or stars. */
-    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'timerSeconds' | 'stars'>>) =>
+    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'timerSeconds' | 'stars' | 'essential'>>) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? withoutEmpty({ ...s, ...patch }) : s))),
+    /** Sets (or with "" clears) the time a list should be finished by. */
+    setFinishBy: (rid: string, finishBy: string) => {
+      const prev = latest.current[rid];
+      if (!prev) return;
+      const { finishBy: _old, ...rest } = prev;
+      const next: Routine = finishBy ? { ...rest, finishBy, updatedAt: Date.now() } : { ...rest, updatedAt: Date.now() };
+      latest.current = { ...latest.current, [rid]: next };
+      setRoutines(latest.current);
+      queues.current[rid]?.save(next);
+    },
     /** Moves a step to the end of another list. One undo puts it back. */
     moveTo: (fromRid: string, toRid: string, id: string) => {
       const step = stepsOf(fromRid).find((s) => s.id === id);

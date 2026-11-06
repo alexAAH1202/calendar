@@ -91,6 +91,18 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
           onDelete={(id) => void store.deleteTemplate(id)} />
       )}
 
+      {set.loaded && (
+        <div className="editor-row editor-row--start">
+          <label className="inline-field">
+            Finish by (optional)
+            <input id="finish-by" type="time" value={set.routines[rid]?.finishBy ?? ''} onChange={(e) => set.setFinishBy(rid, e.target.value)} />
+          </label>
+          {set.routines[rid]?.finishBy && (
+            <button type="button" className="pill" onClick={() => set.setFinishBy(rid, '')}>No finish time</button>
+          )}
+          <p className="panel-text">The wall counts down to it: “Finish by 8:20 · 12 min left”.</p>
+        </div>
+      )}
       {set.loaded && steps.length > 0 && siblings.length > 0 && (
         <DuplicateRow siblings={siblings} tod={tod} steps={steps} set={set} onDone={setCopied} />
       )}
@@ -109,7 +121,7 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
           </p>
           <EditList
             steps={steps}
-            metaFor={(st) => [st.timerSeconds ? `⏱ ${st.timerSeconds / 60} min` : '', st.stars ? '⭐'.repeat(st.stars) : 'no stars'].filter(Boolean).join(' · ')}
+            metaFor={(st) => [st.essential ? '✱ essential' : '', st.timerSeconds ? `⏱ ${st.timerSeconds / 60} min` : '', st.stars ? '⭐'.repeat(st.stars) : 'no stars'].filter(Boolean).join(' · ')}
             expandedId={expandedId}
             onDragMove={(a, b) => set.dragMove(rid, a, b)}
             onUp={(id) => set.moveUp(rid, id)}
@@ -134,6 +146,10 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
                     Duplicate for {sib.name}
                   </button>
                 ))}
+                <label className="check">
+                  <input type="checkbox" checked={!!step.essential} onChange={(e) => set.updateStep(rid, step.id, { essential: e.target.checked })} />
+                  <span>Essential on low-energy days</span>
+                </label>
                 <label className="inline-field">
                   Timer
                   <select value={String(step.timerSeconds ?? 0)} onChange={(e) => set.updateStep(rid, step.id, { timerSeconds: Number(e.target.value) })}>

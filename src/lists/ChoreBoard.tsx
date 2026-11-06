@@ -8,6 +8,8 @@ import { useStore } from '../data/StoreContext';
 import type { Person } from '../data/types';
 import { doneOn, overdue, showsOn, tick, untick, type Chore } from './chores';
 import { useItemList } from './useItemList';
+import { forMode } from '../now/dayMode';
+import { useMode } from '../now/DayModeContext';
 
 /** The wall's Chores view: today's chores and to-dos for each child, then each parent. */
 export function ChoreBoard({ children, day }: { children: Person[]; day: string }) {
@@ -28,7 +30,8 @@ function ChoreColumn({ person, day }: { person: Person; day: string }) {
   const list = useItemList<Chore>(store, ['chores', person.id]);
   const profile = profileOf(person);
   const palette = PALETTES[profile.palette];
-  const shown = list.items.filter((c) => showsOn(c, day));
+  const mode = useMode();
+  const shown = forMode(list.items.filter((c) => showsOn(c, day)), mode);
 
   const setDone = (id: string, done: boolean) =>
     list.commit(list.current().map((c) => (c.id === id ? (done ? tick(c, day) : untick(c, day)) : c)), false);

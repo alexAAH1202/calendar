@@ -6,6 +6,8 @@ export interface Step {
   image?: string;
   timerSeconds?: number;
   stars: number;
+  /** Still shown on a low-energy or running-late day. */
+  essential?: boolean;
 }
 
 export const TIMES_OF_DAY = ['morning', 'afternoon', 'evening'] as const;
@@ -17,6 +19,8 @@ export interface Routine {
   timeOfDay: TimeOfDay;
   steps: Step[];
   updatedAt: number;
+  /** "HH:mm": the time this list should be finished by (e.g. leaving for school). */
+  finishBy?: string;
 }
 
 export type SymbolMode = 'symbols' | 'symbolsText' | 'text';

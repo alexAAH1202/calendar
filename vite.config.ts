@@ -22,6 +22,12 @@ export default defineConfig({
         scope: './',
         background_color: '#ffffff',
         theme_color: '#0f6bd6',
+        // Long-press the app icon on Android for these.
+        shortcuts: [
+          { name: 'Add to brain dump', short_name: 'Brain dump', url: './?view=braindump&capture=1', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Chores', url: './?view=chores', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Week', url: './?view=week', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
+        ],
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

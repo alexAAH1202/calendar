@@ -15,6 +15,9 @@ import { Avatar } from './Avatar';
 import { FirstThen } from './FirstThen';
 import { RewardBar } from './RewardBar';
 import { useReward } from '../lists/useReward';
+import { forMode } from '../now/dayMode';
+import { useMode } from '../now/DayModeContext';
+import { FinishBy } from '../now/FinishBy';
 
 /** The routine a person has for a time of day before anything is saved. */
 export function seedFor(personId: string, tod: TimeOfDay): Routine {
@@ -23,7 +26,7 @@ export function seedFor(personId: string, tod: TimeOfDay): Routine {
 }
 
 /** One child's current routine on the wall, drawn with that child's sensory profile. */
-export function ChildColumn({ person, day, tod }: { person: Person; day: string; tod: TimeOfDay }) {
+export function ChildColumn({ person, day, tod, now }: { person: Person; day: string; tod: TimeOfDay; now: Date }) {
   const store = useStore();
   const profile = profileOf(person);
   const seed = seedFor(person.id, tod);
@@ -31,7 +34,10 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
   const { done, setStep, loaded: dayLoaded } = useCompletion(store, day, person.id);
   const { reward } = useReward(store, person.id);
   const palette = PALETTES[profile.palette];
-  const steps = set.routines[seed.id]?.steps ?? [];
+  const mode = useMode();
+  const routine = set.routines[seed.id];
+  // On a low-energy or running-late day only the essential steps show, and those count as the whole list.
+  const steps = forMode(routine?.steps ?? [], mode);
   const visible = displaySteps(steps, done, profile.completedBehaviour);
   const allDone = steps.length > 0 && steps.every((s) => done.has(s.id));
 
@@ -83,6 +89,9 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
           <span className="progress-text">{progressText(doneCount, steps.length)}</span>
           <span className="progress-bar" aria-hidden="true"><span style={{ width: `${(doneCount / steps.length) * 100}%` }} /></span>
         </div>
+      )}
+      {routine?.finishBy && set.loaded && dayLoaded && (
+        <FinishBy finishBy={routine.finishBy} now={now} stepsLeft={steps.length - doneCount} />
       )}
       {cheer && (
         <div key={cheer.key} className="cheer" role="status">

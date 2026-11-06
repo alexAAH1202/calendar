@@ -17,6 +17,10 @@ import { useDocs } from '../data/useDocs';
 import { useRoutineSet } from '../data/useRoutineSet';
 import { doneOn, overdue, showsOn, tick, untick, type Chore } from '../lists/chores';
 import { starChange } from '../lists/stars';
+import { forMode } from '../now/dayMode';
+import { useMode } from '../now/DayModeContext';
+import { UpNextBar } from '../now/UpNextBar';
+import { TodaysThree } from '../lists/TodaysThree';
 
 interface AgendaItem {
   key: string;
@@ -51,10 +55,11 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
   const days = useDocs<{ doneStepIds?: string[]; starredStepIds?: string[] }>(store, children.map((c) => ['days', dayDocId(today, c.id)]));
   const chores = useDocs<{ items?: Chore[] }>(store, people.map((p) => ['chores', p.id]));
 
+  const mode = useMode();
   const items: AgendaItem[] = [];
   if (isToday) {
     for (const tod of TIMES_OF_DAY) {
-      const lists = children.map((c) => routines.routines[routineId(c.id, tod)]?.steps ?? []);
+      const lists = children.map((c) => forMode(routines.routines[routineId(c.id, tod)]?.steps ?? [], mode));
       const longest = Math.max(0, ...lists.map((l) => l.length));
       for (let i = 0; i < longest; i++) {
         children.forEach((c, ci) => {
@@ -73,7 +78,7 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
   }
   for (const p of people) {
     const list = chores.docs[`chores/${p.id}`]?.items ?? [];
-    for (const c of list) {
+    for (const c of forMode(list, mode)) {
       const shows = isToday ? showsOn(c, key) : c.due === key && !c.done;
       if (!shows) continue;
       const setChore = (d: boolean) =>
@@ -101,6 +106,8 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
 
   return (
     <section className="agenda" aria-label={`The family’s ${format(selected, 'EEEE d MMMM')}`}>
+      {isToday && <UpNextBar now={now} />}
+      {isToday && <TodaysThree />}
       <WeekStrip selected={selected} today={now} onSelect={setSelected} />
 
       {cal.configured && (

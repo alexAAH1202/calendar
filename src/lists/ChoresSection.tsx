@@ -19,8 +19,9 @@ const nice = (key?: string) => (key ? format(new Date(`${key}T12:00:00`), 'EEE d
 
 /** "Every week · next Mon 9 Nov", "Once · Fri 13 Nov", "Once · any day", "Done". */
 export function choreMeta(c: Chore): string {
-  if (c.repeat === 'none') return c.done ? 'Done' : `Once · ${c.due ? nice(c.due) : 'any day'}`;
-  return `${REPEAT_LABELS[c.repeat]} · next ${nice(c.due)}`;
+  const essential = c.essential ? ' · ✱ essential' : '';
+  if (c.repeat === 'none') return (c.done ? 'Done' : `Once · ${c.due ? nice(c.due) : 'any day'}`) + essential;
+  return `${REPEAT_LABELS[c.repeat]} · next ${nice(c.due)}${essential}`;
 }
 
 /** Parent mode: chores and to-dos for each person. */
@@ -108,6 +109,11 @@ function ChoreEditor({ personId, name, today }: { personId: string; name: string
                 <label className="inline-field">
                   {c.repeat === 'none' ? 'Due' : 'Next due'}
                   <input type="date" value={c.due ?? ''} onChange={(e) => change(c.id, (x) => ({ ...x, due: e.target.value || undefined }))} />
+                </label>
+                <label className="check">
+                  <input type="checkbox" checked={!!c.essential}
+                    onChange={(e) => change(c.id, ({ essential: _e, ...x }) => (e.target.checked ? { ...x, essential: true } : x))} />
+                  <span>Essential on low-energy days</span>
                 </label>
                 <ConfirmButton confirmText="Tap again to delete" onConfirm={() => { list.commit(removeById(list.current(), c.id)); setExpandedId(null); }}>
                   Delete

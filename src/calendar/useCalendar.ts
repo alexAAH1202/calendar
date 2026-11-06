@@ -4,6 +4,7 @@ import { BridgeError, createBridge, type BridgeErrorKind } from './bridge';
 import { readCache, writeCache } from './cache';
 import { fetchWindow } from './dates';
 import type { BridgeSettings, CalEvent, FamilyCalendar, NewEvent } from './types';
+import { extrasKey, type TravelMinutes } from '../now/upNext';
 
 export const REFRESH_MS = 10 * 60_000;
 
@@ -27,6 +28,7 @@ export function useCalendar(store: FamilyStore) {
   const [calendars, setCalendars] = useState<FamilyCalendar[]>([]);
   const [calendarsLoaded, setCalendarsLoaded] = useState(false);
   const [parentNames, setParentNames] = useState<Record<string, string>>({});
+  const [travel, setTravel] = useState<TravelMinutes>({});
   const cached = useRef(readCache());
   const [events, setEvents] = useState<CalEvent[]>(cached.current?.events ?? []);
   const [lastUpdated, setLastUpdated] = useState<number | undefined>(cached.current?.fetchedAt);
@@ -46,6 +48,13 @@ export function useCalendar(store: FamilyStore) {
         setCalendars([...list].sort((a, b) => a.order - b.order));
         setCalendarsLoaded(true);
       }),
+    [store],
+  );
+  useEffect(
+    () =>
+      store.watchCollection<{ travelMinutes?: number }>(['eventExtras'], (docs) =>
+        setTravel(Object.fromEntries(docs.filter((d) => d.travelMinutes).map((d) => [d.id, d.travelMinutes!]))),
+      ),
     [store],
   );
   useEffect(
@@ -148,6 +157,10 @@ export function useCalendar(store: FamilyStore) {
   );
 
   return {
+    /** Travel minutes kept for events (our own data, not Google's), by extrasKey. */
+    travel,
+    setTravel: (e: CalEvent, minutes: number) =>
+      minutes ? void store.putDoc(['eventExtras', extrasKey(e)], { travelMinutes: minutes }) : void store.removeDoc(['eventExtras', extrasKey(e)]),
     settings,
     /** False until it is known whether a calendar is set up, so the wall never redraws its layout on load. */
     known,

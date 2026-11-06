@@ -42,6 +42,25 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Executive-function helpers
+
+- **Up next / leave by:** any timed event can have a travel time (kept in `eventExtras/{eventId}`, our data, not
+  Google's, so it works on repeating events and read-only calendars too). Today on the wall and the phone's Day list
+  start with "Up next: Swimming · 4:00 pm · 20 min travel · leave 3:40 pm · leave in 25 min" and a bar that shrinks
+  over the last hour. At 15, 5 and 1 minute the border and words get stronger; nothing flashes.
+- **Finish by:** each routine list can have a finish time (Routines tab). Each child's column shows
+  "Finish by 8:20 · 12 min left · 3 steps to go", stronger at 15 and 5 minutes, calm once passed.
+- **Low-energy day / Running late** (pill on the main screen, family-wide, back to normal by itself the next day):
+  only steps and chores marked "Essential on low-energy days" (⋯) show, and finishing those counts as all done
+  (with the usual cheer and stars). If nothing in a list is marked essential, the list shows as usual. The brain dump
+  shows just today's picks, with "Show everything".
+- **Brain dump:** ☆ picks up to three things for today ("Today's 3", also on the phone's Day list as "Your three
+  today"); ⋯ → Break it down into small steps (the item shows "Next: …"); ⋯ → Remind me on a date (hidden under
+  "Waiting for a date" until then, then shown under ⏰ Reminders); Low items untouched for three weeks move to
+  "Archived" (nothing deleted, "Bring back"). 🎤 to speak where the browser offers speech recognition.
+- **Quick capture:** long-press the installed app's icon on Android: "Add to brain dump" opens it ready to type;
+  also Chores and Week. (`?view=…&capture=1`.)
+
 ## Celebrations
 
 - Each child's column shows "3 of 8 done" with a bar that fills as they tick.

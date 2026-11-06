@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
+import { format } from 'date-fns';
 import { Avatar } from '../components/Avatar';
+import { extrasKey } from '../now/upNext';
 import { useCalendarData } from './CalendarContext';
 import { timeLabel } from './dates';
 import type { CalEvent } from './types';
@@ -15,6 +17,8 @@ export function EventItem({ event, day, compact = false, onEdit }: {
   const cal = useCalendarData();
   const c = cal.calendarFor(event);
   const by = cal.addedBy(event);
+  const travel = event.allDay ? 0 : cal.travel[extrasKey(event)] ?? 0;
+  const leave = travel ? ` · leave ${format(event.start! - travel * 60_000, 'h:mm a').toLowerCase()}` : '';
   return (
     <li className={`event ${compact ? 'event--compact' : ''} ${onEdit ? 'event--editable' : ''}`} style={{ '--cal': c?.colour ?? '#9aa7b1' } as CSSProperties}>
       {onEdit && (
@@ -22,7 +26,7 @@ export function EventItem({ event, day, compact = false, onEdit }: {
       )}
       <span className="event-text">
         <span className="event-title">{event.title}</span>
-        <span className="event-time">{timeLabel(event, day)}</span>
+        <span className="event-time">{timeLabel(event, day)}{leave}</span>
         {!compact && (
           <span className="event-meta">
             {c?.label}

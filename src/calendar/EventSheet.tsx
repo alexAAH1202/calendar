@@ -5,6 +5,7 @@ import { useCalendarData } from './CalendarContext';
 import { timeLabel } from './dates';
 import { blankFields, fieldsOf, toNewEvent, type EventFields } from './eventForm';
 import type { CalEvent } from './types';
+import { extrasKey } from '../now/upNext';
 
 export type SheetTarget = { kind: 'new'; day: string } | { kind: 'edit'; event: CalEvent };
 
@@ -18,6 +19,7 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
   const [f, setF] = useState<EventFields>(() =>
     original ? fieldsOf(original) : blankFields(writable.find((c) => c.shared)?.googleId ?? writable[0]?.googleId ?? '', target.kind === 'new' ? target.day : ''),
   );
+  const [travel, setTravelMin] = useState<number>(original ? cal.travel[extrasKey(original)] ?? 0 : 0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -46,7 +48,10 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
     e.preventDefault();
     const ev = toNewEvent(f);
     if (typeof ev === 'string') return setMessage(ev);
-    void run(() => (original ? cal.update(original, ev) : cal.create(ev)));
+    void run(async () => {
+      const saved = original ? await cal.update(original, ev) : await cal.create(ev);
+      if (!f.allDay) cal.setTravel(saved, travel);
+    });
   };
 
   return (
@@ -63,6 +68,10 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
               {timeLabel(original, original.allDay ? original.startDate! : new Date(original.start!).toISOString().slice(0, 10))}
               {ownCal ? ` · ${ownCal.label}` : ''}{original.location ? ` · ${original.location}` : ''}
             </p>
+            {!original.allDay && (
+              <TravelField value={travel} onChange={(m) => { setTravelMin(m); cal.setTravel(original, m); }}
+                note={original.recurring ? 'Kept for every time this event repeats.' : undefined} />
+            )}
             <p className="notice notice--info">
               {original.recurring
                 ? bridgeErrorText('recurring')
@@ -97,6 +106,7 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
             </div>
             <label htmlFor="ev-where">Where (optional)</label>
             <input id="ev-where" value={f.location} onChange={(e) => set('location', e.target.value)} />
+            {!f.allDay && <TravelField value={travel} onChange={setTravelMin} />}
             <div className="sheet-actions">
               <button type="submit" className="btn btn--primary" disabled={busy || !f.title.trim()}>
                 {busy ? 'Saving…' : original ? 'Save changes' : 'Add to calendar'}
@@ -112,5 +122,18 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
         {message && <p className="notice" role="status">{message}</p>}
       </form>
     </div>
+  );
+}
+
+/** Travel time is kept in the family's own data, not in Google, so it works on any event. */
+function TravelField({ value, onChange, note }: { value: number; onChange: (m: number) => void; note?: string }) {
+  return (
+    <label className="inline-field">
+      Travel time (the wall says when to leave)
+      <select id="ev-travel" value={String(value)} onChange={(e) => onChange(Number(e.target.value))}>
+        {[0, 5, 10, 15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m ? `${m} min` : 'None'}</option>)}
+      </select>
+      {note && <span className="step-meta">{note}</span>}
+    </label>
   );
 }
