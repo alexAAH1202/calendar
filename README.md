@@ -42,6 +42,13 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Duplicate a routine for another child
+
+Routines tab: "⧉ Duplicate for Ethan" copies the list being edited (child and time of day) to the other child's
+same time of day, with timers, stars and symbols. If theirs already has steps it asks: Add after them, Replace
+them, or Cancel. A single step can be duplicated from its ⋯ menu. Copies get new ids, so ticks never carry over
+between children; Undo reverses it (the Routines tab now loads every child's lists together, so one undo covers both).
+
 ## Phase 6: what is built
 
 - **Timers:** a step can have a 1–15 minute timer (⋯ on the step in Routines). On the wall the child taps ▶; a

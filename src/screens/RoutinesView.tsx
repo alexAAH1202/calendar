@@ -11,12 +11,14 @@ import { TemplatesPanel } from '../components/TemplatesPanel';
 import { newId } from '../data/ids';
 import { useStore } from '../data/StoreContext';
 import { TIME_LABELS, routineId } from '../data/timeOfDay';
-import { TIMES_OF_DAY, type Person, type TimeOfDay } from '../data/types';
-import { useRoutineSet } from '../data/useRoutineSet';
+import { TIMES_OF_DAY, type Person, type Step, type TimeOfDay } from '../data/types';
+import { useRoutineSet, type RoutineSet } from '../data/useRoutineSet';
 import { useTemplates } from '../data/useTemplates';
 
 /** The Routines tab: pick a child and a time of day, then change that list. */
 export function RoutinesView({ children, currentTod }: { children: Person[]; currentTod: TimeOfDay }) {
+  // Every child's lists in one set, so duplicating to another child is one change with one undo.
+  const set = useRoutineSet(useStore(), children.flatMap((c) => TIMES_OF_DAY.map((t) => seedFor(c.id, t))));
   const [childId, setChildId] = useState<string | undefined>(children[0]?.id);
   const child = children.find((p) => p.id === childId) ?? children[0];
   if (!child) return <p className="hint">Add a child in Parent → Children first.</p>;
@@ -26,19 +28,24 @@ export function RoutinesView({ children, currentTod }: { children: Person[]; cur
         <Tabs label="Child" value={child.id} onChange={setChildId}
           options={children.map((p) => ({ value: p.id, label: <>{p.avatar && <StepImage image={p.avatar} />} {p.name}</> }))} />
       </div>
-      <RoutineEditor key={child.id} child={child} currentTod={currentTod} />
+      <RoutineEditor key={child.id} child={child} siblings={children.filter((c) => c.id !== child.id)} set={set} currentTod={currentTod} />
     </section>
   );
 }
 
 type Picking = { kind: 'new' } | { kind: 'step'; id: string } | null;
 
-function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeOfDay }) {
+function RoutineEditor({ child, siblings, set, currentTod }: {
+  child: Person;
+  siblings: Person[];
+  set: RoutineSet;
+  currentTod: TimeOfDay;
+}) {
   const store = useStore();
   const [showTemplates, setShowTemplates] = useState(false);
   const templates = useTemplates(store);
   const [tod, setTod] = useState<TimeOfDay>(currentTod);
-  const set = useRoutineSet(store, TIMES_OF_DAY.map((t) => seedFor(child.id, t)));
+  const [copied, setCopied] = useState<string>();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [picking, setPicking] = useState<Picking>(null);
   const [newTitle, setNewTitle] = useState('');
@@ -84,6 +91,11 @@ function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeO
           onDelete={(id) => void store.deleteTemplate(id)} />
       )}
 
+      {set.loaded && steps.length > 0 && siblings.length > 0 && (
+        <DuplicateRow siblings={siblings} tod={tod} steps={steps} set={set} onDone={setCopied} />
+      )}
+      {copied && <p className="notice notice--info" role="status">{copied}</p>}
+
       <SyncNotices routine={set} />
 
       {!set.loaded ? (
@@ -110,6 +122,16 @@ function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeO
                   <button key={t} type="button" className="btn"
                     onClick={() => { set.moveTo(rid, routineId(child.id, t), step.id); setExpandedId(null); }}>
                     Move to {TIME_LABELS[t].toLowerCase()}
+                  </button>
+                ))}
+                {siblings.map((sib) => (
+                  <button key={sib.id} type="button" className="btn"
+                    onClick={() => {
+                      set.applyTemplate(routineId(sib.id, tod), [step], 'append');
+                      setCopied(`Copied “${step.title}” to the end of ${sib.name}’s ${TIME_LABELS[tod].toLowerCase()}.`);
+                      setExpandedId(null);
+                    }}>
+                    Duplicate for {sib.name}
                   </button>
                 ))}
                 <label className="inline-field">
@@ -148,5 +170,48 @@ function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeO
         </>
       )}
     </>
+  );
+}
+
+/**
+ * "Duplicate for Ethan": copies this whole list to the other child's same time of day.
+ * If theirs already has steps, asks whether to add after them or replace them.
+ * The copies get new ids (ticks never carry over) and Undo reverses it.
+ */
+function DuplicateRow({ siblings, tod, steps, set, onDone }: {
+  siblings: Person[];
+  tod: TimeOfDay;
+  steps: Step[];
+  set: RoutineSet;
+  onDone: (message: string) => void;
+}) {
+  const [asking, setAsking] = useState<Person | null>(null);
+  const when = TIME_LABELS[tod].toLowerCase();
+  const target = (p: Person) => set.routines[routineId(p.id, tod)]?.steps ?? [];
+  const copy = (p: Person, mode: 'append' | 'replace') => {
+    set.applyTemplate(routineId(p.id, tod), steps, mode);
+    setAsking(null);
+    onDone(
+      `${mode === 'replace' ? 'Replaced' : 'Copied'} ${steps.length} ${steps.length === 1 ? 'step' : 'steps'} ${mode === 'replace' ? 'in' : 'to'} ${p.name}’s ${when}. Undo puts it back.`,
+    );
+  };
+  return (
+    <div className="duplicate-row">
+      {asking ? (
+        <>
+          <span className="panel-text">{asking.name}’s {when} already has {target(asking).length} steps.</span>
+          <button type="button" className="btn" onClick={() => copy(asking, 'append')}>Add after them</button>
+          <button type="button" className="btn btn--danger" onClick={() => copy(asking, 'replace')}>Replace them</button>
+          <button type="button" className="pill" onClick={() => setAsking(null)}>Cancel</button>
+        </>
+      ) : (
+        siblings.map((p) => (
+          <button key={p.id} type="button" className="btn"
+            onClick={() => (target(p).length ? setAsking(p) : copy(p, 'append'))}>
+            ⧉ Duplicate for {p.name}
+          </button>
+        ))
+      )}
+    </div>
   );
 }

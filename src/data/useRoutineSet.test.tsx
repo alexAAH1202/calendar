@@ -105,6 +105,19 @@ describe('useRoutineSet', () => {
     expect(ids(result)).toBe('s1,s2,s3,s4,s5,s6,s7,s8');
   });
 
+  it('duplicating a list to another child copies it with new ids, and one undo removes it', () => {
+    const B: Routine = { id: 'r_ben_morning', personId: 'p_ben', timeOfDay: 'morning', steps: [], updatedAt: 0 };
+    const { result } = setup(createLocalStore(), [M, E, B]);
+    act(() => result.current.applyTemplate(B.id, result.current.routines[M.id].steps, 'append'));
+    const copy = result.current.routines[B.id].steps;
+    expect(copy.map((s) => s.title)).toEqual(M.steps.map((s) => s.title));
+    expect(copy.some((s) => M.steps.some((m) => m.id === s.id))).toBe(false);
+    expect(copy[2]).toMatchObject({ timerSeconds: 300, image: 'emoji:👕' });
+    act(() => result.current.undo());
+    expect(result.current.routines[B.id].steps).toEqual([]);
+    expect(ids(result)).toBe('s1,s2,s3,s4,s5,s6,s7,s8');
+  });
+
   it('adds a step with its emoji and changes an emoji', () => {
     const { result } = setup();
     act(() => result.current.add(E.id, 'Feed the dog', '🐶'));
