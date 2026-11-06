@@ -8,6 +8,16 @@ const code = readFileSync('apps-script/Code.gs', 'utf8');
 
 interface FakeEvent { id?: string; title: string; start: Date; end: Date; allDay?: boolean; creators?: string[]; location?: string; recurring?: boolean }
 
+const fetched: string[] = [];
+const pages: Record<string, string> = {
+  'https://www.recipetineats.com/honey-garlic-chicken/':
+    '<html><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage"},' +
+    '{"@type":"Recipe","name":"Honey Garlic Chicken","totalTime":"PT12M","description":"<p>Sticky &amp; quick.</p>",' +
+    '"recipeIngredient":["500g chicken breast","1/3 cup honey","2 tbsp butter"]}]}</script></html>',
+  'https://example.com/no-recipe': '<html><script type="application/ld+json">{"@type":"Article"}</script></html>',
+  'https://example.com/slow': '<script type="application/ld+json">[{"@type":["Recipe","Thing"],"name":"Stew","cookTime":"PT90M","recipeIngredient":["Beef"]}]</script>',
+};
+
 function load(props: Record<string, string> = { BRIDGE_KEY: KEY }) {
   const created: unknown[] = [];
   const events: FakeEvent[] = [
@@ -76,6 +86,13 @@ function load(props: Record<string, string> = { BRIDGE_KEY: KEY }) {
       parseDate: (s: string) => new Date(new Date(`${s}T00:00:00Z`).getTime() - 11 * 3600000),
     },
     Logger: { log: () => {} },
+    UrlFetchApp: {
+      fetch: (url: string) => {
+        fetched.push(url);
+        const page = pages[url];
+        return { getResponseCode: () => (page ? 200 : 404), getContentText: () => page ?? '' };
+      },
+    },
   };
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
@@ -148,7 +165,24 @@ describe('Code.gs bridge', () => {
   const FAM = 'family@group.calendar.google.com';
 
   it('reports its version, so the wall can tell an out-of-date script', () => {
-    expect(b.post({ action: 'version', key: KEY })).toEqual({ ok: true, version: 2 });
+    expect(b.post({ action: 'version', key: KEY })).toEqual({ ok: true, version: 3 });
+  });
+
+  it('reads a recipe page’s schema.org Recipe (inside @graph or an array, any @type list)', () => {
+    expect(b.post({ action: 'recipe', key: KEY, url: 'https://www.recipetineats.com/honey-garlic-chicken/' }).recipe).toEqual({
+      name: 'Honey Garlic Chicken', time: '12 min', note: 'Sticky & quick.', url: 'https://www.recipetineats.com/honey-garlic-chicken/',
+      ingredients: ['500g chicken breast', '1/3 cup honey', '2 tbsp butter'],
+    });
+    expect(b.post({ action: 'recipe', key: KEY, url: 'https://example.com/slow' }).recipe).toMatchObject({ name: 'Stew', time: '1 hr 30 min' });
+  });
+
+  it('refuses a page without a recipe, a missing page, a non-web address, and no key', () => {
+    expect(b.post({ action: 'recipe', key: KEY, url: 'https://example.com/no-recipe' }).error).toBe('no_recipe_found');
+    expect(b.post({ action: 'recipe', key: KEY, url: 'https://example.com/missing' }).error).toBe('page_404');
+    const before = fetched.length;
+    expect(b.post({ action: 'recipe', key: KEY, url: 'file:///etc/passwd' }).error).toBe('bad_url');
+    expect(b.post({ action: 'recipe', url: 'https://example.com/slow' }).error).toBe('unauthorised');
+    expect(fetched.length).toBe(before);
   });
 
   it('lists the raw event id and whether it repeats', () => {

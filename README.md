@@ -42,6 +42,22 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Meals (from the family's meal_planner.html)
+
+A 🍽 Meals tab with the family's own planner, now shared by every device (Firestore `meals/recipes`,
+`meals/shopping`, `meals/plan`, `meals/pantry`) instead of one browser's storage:
+
+- **Plan:** the fortnight as before (8 family nights, then 6 couples nights), now anchored to a start Monday so the
+  wall and the phone's Day list show **🍽 Dinner tonight**. Library or free text per night, cooked tick, clear,
+  🎲 Plan my week (how many, who for, only empty nights), Reset fortnight. Picking a meal adds its ingredients.
+- **Recipes:** the 36 built-in gluten-free recipes (kept exactly), filters (Kids, Couples, Quick, Batch, ★ Yours)
+  and search; add, change or delete your own; **import from a recipe website** through the Apps Script (version 3:
+  it reads the schema.org Recipe that most sites publish; aisles are guessed and can be changed; no AI, so GF swaps
+  go in the notes). The original's import called the Claude API from the page, which only works inside Claude's
+  own preview and would need a key in a public page; it was replaced.
+- **Shopping:** by aisle, add items, merge duplicates, tick all / untick all / remove ticked, print, 🛒 Coles, undo.
+- **Pantry:** the original check lists; send what is missing to the shopping list; GF brand reminders.
+
 ## Executive-function helpers
 
 - **Up next / leave by:** any timed event can have a travel time (kept in `eventExtras/{eventId}`, our data, not

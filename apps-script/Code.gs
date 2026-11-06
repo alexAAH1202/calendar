@@ -16,7 +16,7 @@
  */
 
 /** Bumped when actions are added, so the wall can tell an out-of-date script. */
-var VERSION = 2;
+var VERSION = 3;
 var MAX_RANGE_DAYS = 120;
 var MAX_TITLE = 200;
 
@@ -59,6 +59,7 @@ function doPost(e) {
     if (req.action === 'update') return json_({ ok: true, event: updateEvent_(req) });
     if (req.action === 'delete') return json_({ ok: true, deleted: deleteEvent_(req) });
     if (req.action === 'version') return json_({ ok: true, version: VERSION });
+    if (req.action === 'recipe') return json_({ ok: true, recipe: readRecipe_(req.url) });
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err).slice(0, 200) });
@@ -226,6 +227,62 @@ function deleteEvent_(req) {
   refuseRecurring_(ev);
   ev.deleteEvent();
   return true;
+}
+
+/**
+ * Reads a recipe page (version 3). Most recipe sites publish a schema.org "Recipe" block for
+ * search engines; this returns its name, time, description and ingredient lines. Only http(s)
+ * pages, at most 2 MB; nothing is stored.
+ */
+function readRecipe_(url) {
+  if (typeof url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(url)) throw new Error('bad_url');
+  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true, headers: { 'User-Agent': 'Mozilla/5.0 (family wall calendar recipe import)' } });
+  if (res.getResponseCode() >= 400) throw new Error('page_' + res.getResponseCode());
+  var html = res.getContentText();
+  if (html.length > 2000000) throw new Error('page_too_big');
+  var blocks = html.match(/<script[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+  for (var i = 0; i < blocks.length; i++) {
+    var text = blocks[i].replace(/^<script[^>]*>/i, '').replace(/<\/script>$/i, '');
+    var data;
+    try { data = JSON.parse(text); } catch (e) { continue; }
+    var r = findRecipe_(data);
+    if (r) {
+      return {
+        name: clean_(r.name),
+        time: durationText_(r.totalTime || r.cookTime || ''),
+        note: clean_(r.description).slice(0, 150),
+        url: url,
+        ingredients: (r.recipeIngredient || r.ingredients || []).map(clean_).filter(function (x) { return x; }).slice(0, 60),
+      };
+    }
+  }
+  throw new Error('no_recipe_found');
+}
+
+function findRecipe_(node) {
+  if (!node || typeof node !== 'object') return null;
+  if (Array.isArray(node)) {
+    for (var i = 0; i < node.length; i++) { var f = findRecipe_(node[i]); if (f) return f; }
+    return null;
+  }
+  var type = node['@type'];
+  if (type === 'Recipe' || (Array.isArray(type) && type.indexOf('Recipe') >= 0)) return node;
+  return findRecipe_(node['@graph']);
+}
+
+/** "PT1H20M" -> "1 hr 20 min"; anything else as it is. */
+function durationText_(iso) {
+  var m = /^P(?:T)?(?:(\d+)H)?(?:(\d+)M)?/.exec(String(iso));
+  if (!m || (!m[1] && !m[2])) return '';
+  var h = Number(m[1] || 0), min = Number(m[2] || 0);
+  h += Math.floor(min / 60); min = min % 60;
+  return (h ? h + ' hr' : '') + (h && min ? ' ' : '') + (min ? min + ' min' : '');
+}
+
+/** Plain text: no tags, entities decoded, spaces tidied. */
+function clean_(s) {
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
+    .replace(/&frac12;/g, '½').replace(/&frac14;/g, '¼').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function json_(obj) {

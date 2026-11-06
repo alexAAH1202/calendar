@@ -21,6 +21,8 @@ import { ColesButton } from '../wall/ColesButton';
 import { DayModeContext } from '../now/DayModeContext';
 import { ModeBanner, ModeSwitch } from '../now/ModeSwitch';
 import { UpNextBar } from '../now/UpNextBar';
+import { DinnerTonight } from '../meals/DinnerTonight';
+import { MealsView } from '../meals/MealsView';
 import { useDayMode } from '../now/useDayMode';
 import { inSleepWindow } from '../wall/schedule';
 import { SleepScreen } from '../wall/SleepScreen';
@@ -31,7 +33,7 @@ import { useUpdateReady } from '../wall/useUpdateReady';
 import { useWakeLock } from '../wall/useWakeLock';
 import { useWallSettings } from '../wall/useWallSettings';
 
-type View = 'agenda' | 'today' | 'routines' | 'chores' | 'braindump' | 'week' | 'month';
+type View = 'agenda' | 'today' | 'routines' | 'chores' | 'braindump' | 'meals' | 'week' | 'month';
 
 interface Props {
   /** A parent's phone: opens on the Day list, Setup behind a plain button. */
@@ -106,6 +108,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'routines', label: 'Routines', icon: '✅' },
             { value: 'chores', label: 'Chores', icon: '🧹' },
             { value: 'braindump', label: 'Brain dump', icon: '💭' },
+            { value: 'meals', label: 'Meals', icon: '🍽' },
             { value: 'week', label: 'Week', icon: '🗓️' },
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
@@ -134,25 +137,33 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
           </div>
           <BrainDump capture={capturing} />
         </section>
+      ) : view === 'meals' ? (
+        <MealsView now={now} />
       ) : view === 'week' || view === 'month' ? (
         <CalendarView key={view} now={now} mode={view} />
       ) : calendar.configured ? (
         <>
-          <UpNextBar now={now} />
+          <div className="today-strip">
+            <UpNextBar now={now} />
+            <DinnerTonight now={now} />
+          </div>
           <div className="today-layout">
             <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
             <ChildBoard children={children} day={day} tod={tod} now={now} />
           </div>
         </>
       ) : (
-        <ChildBoard children={children} day={day} tod={tod} now={now} />
+        <>
+          <DinnerTonight now={now} />
+          <ChildBoard children={children} day={day} tod={tod} now={now} />
+        </>
       )}
     </main>
     </DayModeContext.Provider>
   );
 }
 
-const VIEWS: View[] = ['agenda', 'today', 'routines', 'chores', 'braindump', 'week', 'month'];
+const VIEWS: View[] = ['agenda', 'today', 'routines', 'chores', 'braindump', 'meals', 'week', 'month'];
 
 /** The tab asked for by a home-screen shortcut (?view=…), if any. */
 function startView(): View | undefined {

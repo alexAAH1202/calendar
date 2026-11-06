@@ -25,6 +25,7 @@ export default defineConfig({
         // Long-press the app icon on Android for these.
         shortcuts: [
           { name: 'Add to brain dump', short_name: 'Brain dump', url: './?view=braindump&capture=1', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Shopping list', short_name: 'Meals', url: './?view=meals', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
           { name: 'Chores', url: './?view=chores', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
           { name: 'Week', url: './?view=week', icons: [{ src: 'icons/icon-192.png', sizes: '192x192' }] },
         ],

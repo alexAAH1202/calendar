@@ -31,7 +31,7 @@ no such limit, so the wall keeps showing new events without anyone touching it. 
 
 ## Updating the script later
 
-**Version 2 (adds changing and deleting events):** open the script, select all of the old code, paste the new
+**Version 3 (adds reading recipe pages for the meal planner's import; version 2 added changing and deleting events):** open the script, select all of the old code, paste the new
 [`Code.gs`](./Code.gs) over it, Save, then follow the steps below. Your key stays the same.
 
 

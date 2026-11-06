@@ -1,6 +1,6 @@
 import { occurrenceOf, type BridgeCalendar, type BridgeSettings, type CalEvent, type NewEvent } from './types';
 
-export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access' | 'outdated' | 'recurring' | 'gone';
+export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access' | 'outdated' | 'recurring' | 'gone' | 'noRecipe';
 
 export class BridgeError extends Error {
   constructor(public kind: BridgeErrorKind, detail = '') {
@@ -26,9 +26,11 @@ export function bridgeErrorText(kind: BridgeErrorKind): string {
     case 'access':
       return 'Google answered, but would not let the app read the reply. In Apps Script, open Deploy > Manage deployments > ✏️, set Who has access to "Anyone" (not "Anyone with Google account"), choose Version: New version, Deploy, then try again. To check: open the web app address in a private window; it should show {"ok":true,…}.';
     case 'outdated':
-      return 'The Apps Script needs updating to change or delete events. Paste the latest Code.gs, then Deploy > Manage deployments > ✏️ > Version: New version > Deploy. The address stays the same.';
+      return 'The Apps Script needs updating for this. Paste the latest Code.gs, then Deploy > Manage deployments > ✏️ > Version: New version > Deploy. The address stays the same.';
     case 'recurring':
       return 'This is a repeating event. Change or delete it in Google Calendar, where you can choose this one or all of them.';
+    case 'noRecipe':
+      return 'No recipe could be read from that page. Check the address, or type the recipe in yourself.';
     case 'gone':
       return 'That event was already changed or deleted in Google. The list has been refreshed.';
     case 'notBridge':
@@ -83,6 +85,7 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
     if (data.error === 'unknown_action') throw new BridgeError('outdated');
     if (data.error === 'recurring_event') throw new BridgeError('recurring');
     if (data.error === 'event_not_found') throw new BridgeError('gone');
+    if (data.error === 'no_recipe_found' || data.error === 'bad_url' || String(data.error).startsWith('page_')) throw new BridgeError('noRecipe', String(data.error));
     throw new BridgeError('google', String(data.error ?? 'unknown'));
   }
 
@@ -103,6 +106,9 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
         })
       ).event;
     },
+    /** Reads a recipe page through the Apps Script (version 3): name, time, note and ingredient lines. */
+    recipe: async (url: string) =>
+      (await call<{ recipe: { name: string; time: string; note: string; url: string; ingredients: string[] } }>('recipe', { url })).recipe,
     remove: async (original: CalEvent) => {
       if (!original.eventId) throw new BridgeError('outdated');
       await call('delete', { calendarId: original.calendarId, eventId: original.eventId, occurrence: occurrenceOf(original) });

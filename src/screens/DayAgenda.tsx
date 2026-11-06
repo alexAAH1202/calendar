@@ -21,6 +21,7 @@ import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
 import { UpNextBar } from '../now/UpNextBar';
 import { TodaysThree } from '../lists/TodaysThree';
+import { DinnerTonight } from '../meals/DinnerTonight';
 
 interface AgendaItem {
   key: string;
@@ -107,6 +108,7 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
   return (
     <section className="agenda" aria-label={`The family’s ${format(selected, 'EEEE d MMMM')}`}>
       {isToday && <UpNextBar now={now} />}
+      {isToday && <DinnerTonight now={now} />}
       {isToday && <TodaysThree />}
       <WeekStrip selected={selected} today={now} onSelect={setSelected} />
 
