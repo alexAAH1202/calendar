@@ -4,11 +4,11 @@ let ctx: AudioContext | undefined;
  * A short, quiet two-note chime for a ticked step. Only played for a child whose
  * profile has sound turned on (off by default). Fails silently if audio is unavailable.
  */
-export function playSoftCue(): void {
+export function playSoftCue(notes: number[] = [523.25, 659.25]): void {
   try {
     ctx ??= new AudioContext();
     const now = ctx.currentTime;
-    [523.25, 659.25].forEach((freq, i) => {
+    notes.forEach((freq, i) => {
       const osc = ctx!.createOscillator();
       const gain = ctx!.createGain();
       osc.type = 'sine';
@@ -25,3 +25,6 @@ export function playSoftCue(): void {
     /* no audio: stay silent */
   }
 }
+
+/** A slightly brighter three-note chime for finishing a whole list. Same quiet volume. */
+export const playAllDoneCue = () => playSoftCue([523.25, 659.25, 783.99]);

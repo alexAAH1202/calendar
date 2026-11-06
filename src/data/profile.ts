@@ -9,6 +9,7 @@ export const DEFAULT_PROFILE: SensoryProfile = {
   palette: 'calm',
   brightness: 1,
   layout: 'checklist',
+  celebration: 'gentle',
 };
 
 export function profileOf(person: Person): SensoryProfile {

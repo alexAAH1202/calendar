@@ -38,6 +38,8 @@ export interface SensoryProfile {
   brightness: number;
   /** The whole list, or one step at a time as "First … Then …". */
   layout: 'checklist' | 'firstThen';
+  /** A small cheer on each tick ('gentle'), plus confetti when the list is finished ('big'). */
+  celebration: 'off' | 'gentle' | 'big';
 }
 
 export interface Person {

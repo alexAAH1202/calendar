@@ -99,6 +99,10 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
         <Tabs<SensoryProfile['animation']> label="Motion" value={profile.animation} onChange={(v) => set('animation', v)}
           options={[{ value: 'none', label: 'None' }, { value: 'soft', label: 'Soft fade' }]} />
       </Setting>
+      <Setting label="Celebrate ticks">
+        <Tabs<SensoryProfile['celebration']> label="Celebrate ticks" value={profile.celebration} onChange={(v) => set('celebration', v)}
+          options={[{ value: 'off', label: 'Off' }, { value: 'gentle', label: 'Gentle cheer' }, { value: 'big', label: 'Cheer + confetti' }]} />
+      </Setting>
       <Setting label="Sound when ticking">
         <Tabs<string> label="Sound when ticking" value={profile.sound ? 'on' : 'off'} onChange={(v) => set('sound', v === 'on')}
           options={[{ value: 'off', label: 'Off' }, { value: 'on', label: 'Soft chime' }]} />

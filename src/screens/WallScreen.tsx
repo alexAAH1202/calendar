@@ -17,6 +17,7 @@ import { ChoresView } from '../lists/ChoresView';
 import { DayAgenda } from './DayAgenda';
 import { RoutinesView } from './RoutinesView';
 import { SetupScreen } from './SetupScreen';
+import { ColesButton } from '../wall/ColesButton';
 import { inSleepWindow } from '../wall/schedule';
 import { SleepScreen } from '../wall/SleepScreen';
 import { reloadApp } from '../wall/pwa';
@@ -118,7 +119,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
       ) : view === 'braindump' ? (
         <section className="edit-surface" aria-label="Brain dump">
           <div className="editor-row editor-row--end">
-            <a className="btn" href="https://www.coles.com.au/" target="_blank" rel="noopener noreferrer">🛒 Coles groceries</a>
+            <ColesButton />
           </div>
           <BrainDump />
         </section>

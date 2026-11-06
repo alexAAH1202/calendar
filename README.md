@@ -42,6 +42,24 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Celebrations
+
+- Each child's column shows "3 of 8 done" with a bar that fills as they tick.
+- Per child (Parent → Children → Celebrate ticks): **Off**, **Gentle cheer** (default) or **Cheer + confetti**.
+  Gentle: each tick shows a short word ("Nice one!", "Great job!" …) with the stars earned, rising and fading
+  over 1.8 s, and the tick box gives a small bounce (only the one just ticked, never on load). Finishing the list
+  says "All done, Astrid!" and leaves "🎉 All done, Astrid!" under the list. Cheer + confetti adds a 2.6 s burst
+  of confetti over that child's column, which clears itself.
+- Nothing flashes. If the device asks for reduced motion, the cheer appears and fades in place and there is no
+  confetti or bounce. Sound stays off unless the child's sound is on (a brighter three-note chime for finishing).
+- This loosens the spec's "no motion by default" for these moments, at the family's request; Off restores it.
+
+## Groceries pop-up
+
+"🛒 Coles groceries" opens Coles as a pop-up window. In the installed app (Add to home screen), Android shows
+it as an overlay with a ✕ that returns to the app. It cannot be shown inside the app's own page: shops like Coles
+forbid their site being framed by another site, and their sign-in would not work there.
+
 ## Duplicate a routine for another child
 
 Routines tab: "⧉ Duplicate for Ethan" copies the list being edited (child and time of day) to the other child's

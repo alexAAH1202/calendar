@@ -862,3 +862,49 @@ h1 { font-weight: 800; letter-spacing: -0.01em; }
 }
 .sleep-clock { color: #3a3a3a; font-size: 32px; font-variant-numeric: tabular-nums; }
 .duplicate-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); margin-bottom: 12px; }
+
+/* Celebrations: a cheer that rises and fades on each tick, confetti when a list is finished.
+   Nothing flashes; with reduced motion the cheer just appears and fades in place. */
+.child-column { position: relative; }
+.progress { display: flex; align-items: center; gap: 12px; padding: 0 4px 4px; }
+.progress-text { flex: none; font-size: 20px; font-weight: 800; color: var(--text); }
+.progress-bar { flex: 1; height: 14px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, #fff); overflow: hidden; }
+.progress-bar span { display: block; height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--accent) 85%, #000); transition: width 400ms ease; }
+.cheer {
+  position: absolute;
+  left: 50%;
+  top: 140px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(20, 40, 80, 0.2);
+  border: 3px solid color-mix(in srgb, var(--accent) 70%, #000);
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: cheer-rise 1800ms ease-out forwards;
+}
+.cheer-text { font-size: 30px; font-weight: 800; color: var(--text); }
+.cheer-stars { font-size: 26px; font-weight: 800; color: #8a5a00; }
+@keyframes cheer-rise {
+  0% { opacity: 0; transform: translate(-50%, 24px) scale(0.85); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+  25% { transform: translate(-50%, 0) scale(1); }
+  75% { opacity: 1; transform: translate(-50%, -24px); }
+  100% { opacity: 0; transform: translate(-50%, -48px); }
+}
+.step--just .tick { animation: tick-pop 320ms ease-out; }
+@keyframes tick-pop { 0% { transform: scale(0.8); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.confetti { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
+.celebrate-gentle .all-done, .celebrate-big .all-done { font-size: calc(var(--child-text) * 1.1); color: var(--text); }
+@media (prefers-reduced-motion: reduce) {
+  .cheer { animation: cheer-fade 1800ms linear forwards; transform: translateX(-50%); }
+  .confetti { display: none; }
+  .step--just .tick { animation: none; }
+  .progress-bar span { transition: none; }
+}
+@keyframes cheer-fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
