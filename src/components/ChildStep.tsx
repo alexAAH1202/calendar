@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { SymbolMode } from '../data/types';
 import type { ListItem } from './EditStep';
 import { StepImage } from './StepImage';
@@ -10,6 +10,12 @@ interface Props {
   note?: string;
   onSetDone: (done: boolean) => void;
   symbolMode?: SymbolMode;
+  /** Shown at the right of the card, e.g. the person's initial. */
+  badge?: ReactNode;
+  /** For days other than today: shown, not tickable. */
+  readOnly?: boolean;
+  /** The person's colour, for a card in a mixed list. */
+  accent?: string;
 }
 
 const CONFIRM_MS = 4000;
@@ -19,7 +25,7 @@ const CONFIRM_MS = 4000;
  * second action: the first tap on a done step shows an "Not done" button,
  * which hides itself again after a few seconds.
  */
-export function ChildStep({ step, done, note, onSetDone, symbolMode = 'symbolsText' }: Props) {
+export function ChildStep({ step, done, note, onSetDone, symbolMode = 'symbolsText', badge, readOnly = false, accent }: Props) {
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
@@ -33,11 +39,12 @@ export function ChildStep({ step, done, note, onSetDone, symbolMode = 'symbolsTe
   }, [done]);
 
   return (
-    <li className={`step ${done ? 'step--done' : ''}`}>
+    <li className={`step ${done ? 'step--done' : ''}`} style={accent ? ({ '--accent': accent } as CSSProperties) : undefined}>
       <button
         type="button"
         className="step-main"
         aria-pressed={done}
+        disabled={readOnly}
         onClick={() => (done ? setConfirming(true) : onSetDone(true))}
       >
         <span className="tick" aria-hidden="true">{done ? '✓' : ''}</span>
@@ -47,6 +54,7 @@ export function ChildStep({ step, done, note, onSetDone, symbolMode = 'symbolsTe
           {note && <span className="step-meta">{note}</span>}
         </span>
         {done && <span className="visually-hidden">(done)</span>}
+        {badge}
       </button>
       {confirming && (
         <button type="button" className="untick" onClick={() => onSetDone(false)}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FamilyStore } from './store';
+import { personColour } from './profile';
 import type { Person } from './types';
 
 /** The family's children, in wall order. */
@@ -18,6 +19,7 @@ export function usePeople(store: FamilyStore) {
 
   const children = people
     .filter((p) => p.role === 'child')
+    .map((p) => ({ ...p, colour: personColour(p.colour) }))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
 
   return { children, loaded };

@@ -9,7 +9,7 @@ import { useCompletion } from '../data/useCompletion';
 import { useRoutineSet } from '../data/useRoutineSet';
 import { ChildStep } from './ChildStep';
 import { playSoftCue } from './softCue';
-import { StepImage } from './StepImage';
+import { Avatar } from './Avatar';
 
 /** The routine a person has for a time of day before anything is saved. */
 export function seedFor(personId: string, tod: TimeOfDay): Routine {
@@ -35,6 +35,7 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
     '--surface': palette.surface,
     '--text': palette.text,
     '--muted': palette.muted,
+    '--tint': `${palette.tint * 100}%`,
     '--child-text': `${TEXT_SIZES[profile.textSize]}px`,
     filter: profile.brightness < 1 ? `brightness(${profile.brightness})` : undefined,
   } as CSSProperties;
@@ -45,10 +46,10 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
   };
 
   return (
-    <section className={`child-column ${profile.animation === 'soft' ? 'motion-soft' : 'motion-none'}`} style={style}
+    <section className={`child-column ${profile.animation === 'soft' ? 'motion-soft' : 'motion-none'} ${profile.palette === 'contrast' ? 'child-column--contrast' : ''}`} style={style}
       aria-label={`${person.name}’s ${TIME_LABELS[tod].toLowerCase()}`}>
       <header className="child-header">
-        {person.avatar && <StepImage image={person.avatar} />}
+        <Avatar name={person.name} colour={person.colour} image={person.avatar} size={56} />
         <h2>{person.name}</h2>
         <span className="child-tod">{TIME_LABELS[tod]}</span>
       </header>

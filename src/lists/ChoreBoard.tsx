@@ -1,8 +1,8 @@
 import { format } from 'date-fns';
 import type { CSSProperties } from 'react';
 import { ChildStep } from '../components/ChildStep';
-import { StepImage } from '../components/StepImage';
-import { useFamilyInfo } from '../data/FamilyInfo';
+import { Avatar } from '../components/Avatar';
+import { PARENT_COLOUR, useFamilyInfo } from '../data/FamilyInfo';
 import { PALETTES, TEXT_SIZES, profileOf } from '../data/profile';
 import { useStore } from '../data/StoreContext';
 import type { Person } from '../data/types';
@@ -14,7 +14,7 @@ export function ChoreBoard({ children, day }: { children: Person[]; day: string 
   const { parents } = useFamilyInfo();
   const people: Person[] = [
     ...children,
-    ...parents.map((p): Person => ({ id: p.id, name: p.name, role: 'parent', colour: '#5f5b53' })),
+    ...parents.map((p): Person => ({ id: p.id, name: p.name, role: 'parent', colour: PARENT_COLOUR })),
   ];
   return (
     <div className="child-board" style={{ gridTemplateColumns: `repeat(${people.length}, minmax(0, 1fr))` }}>
@@ -39,13 +39,14 @@ function ChoreColumn({ person, day }: { person: Person; day: string }) {
     '--surface': palette.surface,
     '--text': palette.text,
     '--muted': palette.muted,
+    '--tint': `${palette.tint * 100}%`,
     '--child-text': `${person.role === 'child' ? TEXT_SIZES[profile.textSize] : 24}px`,
   } as CSSProperties;
 
   return (
     <section className="child-column motion-none" style={style} aria-label={`${person.name}’s chores`}>
       <header className="child-header">
-        {person.avatar && <StepImage image={person.avatar} />}
+        <Avatar name={person.name} colour={person.colour} image={person.avatar} size={56} />
         <h2>{person.name}</h2>
         <span className="child-tod">Chores</span>
       </header>

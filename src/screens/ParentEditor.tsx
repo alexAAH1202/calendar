@@ -26,7 +26,6 @@ type Panel = 'none' | 'settings' | 'templates' | 'family';
 interface Props {
   people: Person[];
   currentTod: TimeOfDay;
-  isPhone: boolean;
   parentTools?: ReactNode;
   onExit: () => void;
   header: ReactNode;
@@ -36,7 +35,7 @@ interface Props {
 type Section = 'routines' | 'chores' | 'braindump' | 'calendar';
 
 /** Parent mode: choose a child and a time of day, then edit that list. */
-export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit, header, now }: Props) {
+export function ParentEditor({ people, currentTod, parentTools, onExit, header, now }: Props) {
   const store = useStore();
   const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
   const [panel, setPanel] = useState<Panel>('none');
@@ -75,18 +74,18 @@ export function ParentEditor({ people, currentTod, isPhone, parentTools, onExit,
               Family
             </button>
           )}
-          <button type="button" className="btn btn--primary" onClick={onExit}>{isPhone ? 'Preview' : 'Done'}</button>
+          <button type="button" className="btn btn--primary" onClick={onExit}>Done</button>
         </div>
       </header>
       {panel === 'family' && parentTools}
 
       <div className="editor-row">
-        <Tabs<Section> label="Section" value={section} onChange={setSection}
+        <Tabs<Section> label="Section" value={section} onChange={setSection} withIcons
           options={[
-            { value: 'routines', label: 'Routines' },
-            { value: 'chores', label: 'Chores' },
-            { value: 'braindump', label: 'Brain dump' },
-            { value: 'calendar', label: 'Calendar' },
+            { value: 'routines', label: 'Routines', icon: '☀️' },
+            { value: 'chores', label: 'Chores', icon: '🧹' },
+            { value: 'braindump', label: 'Brain dump', icon: '💭' },
+            { value: 'calendar', label: 'Calendar', icon: '📅' },
           ]} />
       </div>
 

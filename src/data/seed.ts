@@ -1,7 +1,7 @@
 import type { Person, Routine } from './types';
 
 /** Phase 1: one child, one Morning routine of 8 steps. Emoji are placeholders until a symbol library is chosen. */
-export const SEED_CHILD: Person = { id: 'p_child', name: 'Ava', role: 'child', colour: '#5b8a72' };
+export const SEED_CHILD: Person = { id: 'p_child', name: 'Ava', role: 'child', colour: '#1f8a7a' };
 
 export const SEED_ROUTINE: Routine = {
   id: 'r_child_morning',

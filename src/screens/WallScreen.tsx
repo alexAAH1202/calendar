@@ -6,6 +6,7 @@ import { TodayPanel } from '../calendar/TodayPanel';
 import { WeekView } from '../calendar/WeekView';
 import { ChildBoard } from '../components/ChildBoard';
 import { ChoreBoard } from '../lists/ChoreBoard';
+import { DayAgenda } from './DayAgenda';
 import { Tabs } from '../components/Tabs';
 import { HoldButton } from '../components/HoldButton';
 import { useIdleExit } from '../components/useIdleExit';
@@ -16,7 +17,7 @@ import { dayKey } from '../date/dayKey';
 import { useNow } from '../date/useNow';
 import { ParentEditor } from './ParentEditor';
 
-type WallView = 'today' | 'chores' | 'week' | 'month';
+type WallView = 'agenda' | 'today' | 'chores' | 'week' | 'month';
 
 interface Props {
   /** Phones open straight into edit mode and do not time out of it. */
@@ -32,15 +33,21 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const day = dayKey(now);
   const tod = timeOfDayAt(now);
   const { children, loaded } = usePeople(store);
-  const [editing, setEditing] = useState(isPhone);
-  const [view, setView] = useState<WallView>('today');
+  const [editing, setEditing] = useState(false);
+  // Phones open on the family's Day list; the wall on Today.
+  const home: WallView = isPhone ? 'agenda' : 'today';
+  const [view, setView] = useState<WallView>(home);
+  const [panelDay, setPanelDay] = useState<Date | null>(null);
+  const clearPanelDay = useCallback(() => setPanelDay(null), []);
   const calendar = useCalendarData();
   const calendarReady = calendar.configured;
   const exitEdit = useCallback(() => setEditing(false), []);
-  const backToToday = useCallback(() => setView('today'), []);
+  const backToToday = useCallback(() => setView(home), [home]);
   useIdleExit(editing && !isPhone, exitEdit);
   // The wall drifts back to Today after five quiet minutes on another view.
-  useIdleExit(!editing && view !== 'today', backToToday, 5 * 60_000);
+  useIdleExit(!editing && view !== home, backToToday, 5 * 60_000);
+  // A day picked in the Today panel's week strip also goes back to today after five quiet minutes.
+  useIdleExit(!editing && panelDay !== null, clearPanelDay, 5 * 60_000);
 
   const dateLine = (
     <div>
@@ -52,7 +59,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
 
   if (editing) {
     return (
-      <ParentEditor people={children} currentTod={tod} isPhone={isPhone} parentTools={parentTools}
+      <ParentEditor people={children} currentTod={tod} parentTools={parentTools}
         onExit={exitEdit} header={dateLine} now={now} />
     );
   }
@@ -62,19 +69,20 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
     <main className={`screen screen--child ${wide ? 'screen--wide' : ''}`}>
       <header className="screen-header">
         {dateLine}
-        <Tabs<WallView> label="View" value={view} onChange={setView}
+        <Tabs<WallView> label="View" value={view} onChange={setView} withIcons
           options={[
-            { value: 'today', label: 'Today' },
-            { value: 'chores', label: 'Chores' },
-            ...(calendarReady ? [{ value: 'week' as const, label: 'Week' }, { value: 'month' as const, label: 'Month' }] : []),
+            ...(isPhone ? [{ value: 'agenda' as const, label: 'Day', icon: '📋' }] : []),
+            { value: 'today', label: isPhone ? 'Routines' : 'Today', icon: '☀️' },
+            { value: 'chores', label: 'Chores', icon: '🧹' },
+            ...(calendarReady
+              ? [{ value: 'week' as const, label: 'Week', icon: '🗓️' }, { value: 'month' as const, label: 'Month', icon: '📅' }]
+              : []),
           ]} />
-        {isPhone ? (
-          <button type="button" className="btn" onClick={() => setEditing(true)}>Edit</button>
-        ) : (
-          <HoldButton label="Parent edit mode" onHold={() => setEditing(true)}>Parent</HoldButton>
-        )}
+        {!isPhone && <HoldButton label="Parent edit mode" onHold={() => setEditing(true)}>Parent</HoldButton>}
       </header>
-      {view === 'chores' ? (
+      {view === 'agenda' ? (
+        <DayAgenda children={children} now={now} />
+      ) : view === 'chores' ? (
         <ChoreBoard children={children} day={day} />
       ) : view === 'week' && calendarReady ? (
         <WeekView now={now} anchor={now} />
@@ -82,11 +90,16 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
         <MonthView now={now} anchor={now} />
       ) : calendarReady ? (
         <div className="today-layout">
-          <TodayPanel now={now} />
+          <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
           <ChildBoard children={children} day={day} tod={tod} />
         </div>
       ) : (
         <ChildBoard children={children} day={day} tod={tod} />
+      )}
+      {isPhone && (
+        <button type="button" className="fab" aria-label="Edit: add and change routines, chores and events" onClick={() => setEditing(true)}>
+          +
+        </button>
       )}
     </main>
   );

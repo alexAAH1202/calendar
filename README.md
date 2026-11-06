@@ -42,6 +42,19 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Look and feel (after Phase 5)
+
+- Soft gradient header, rounded Nunito font (bundled in the app, OFL licence, works offline), pill buttons,
+  tabs with symbols, a week strip with the chosen day in a filled capsule.
+- Cards are tinted with their person's colour and carry an initial badge; events are tinted with their calendar's
+  colour with a darker bar. Brighter person colours; the earlier muted defaults show as their brighter equivalents.
+  Text on every tinted card meets WCAG AA (tested for every palette and colour); done still shows as a tick plus
+  faded, struck-through text, never colour alone. Edit mode keeps a different (lavender) background.
+- **Phones open on the family's Day list** (a change from the spec, which had phones open in edit mode): a week
+  strip, then Calendar, To do (everyone's routine steps and chores, tickable with the same guard) and Completed.
+  The round **+** button opens parent mode. The wall's Today panel also has a week strip to look at another day's
+  events; it goes back to today after five quiet minutes.
+
 ## Phase 5: what is built
 
 - **Chores and to-dos** (`chores/{personId}`, one document per person, items in display order): for each child and
