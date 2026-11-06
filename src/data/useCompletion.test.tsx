@@ -23,6 +23,19 @@ describe('per-date completion and midnight swap', () => {
     expect(result.current.done.has('s1')).toBe(true);
   });
 
+  it('a step earns its stars once: tick, untick, tick again', async () => {
+    const store = createLocalStore();
+    const { result } = renderHook(({ s }) => useCompletion(s, '2026-11-05', 'p1'), { initialProps: { s: store } });
+    const banked = () => JSON.parse(window.localStorage.getItem('fwc:rewards/p1') ?? '{"banked":0}').banked;
+    await act(async () => result.current.setStep('s1', true, 2));
+    expect(banked()).toBe(2);
+    await act(async () => result.current.setStep('s1', false, 2));
+    expect(banked()).toBe(0);
+    await act(async () => result.current.setStep('s1', true, 2));
+    await act(async () => result.current.setStep('s2', true, 1));
+    expect(banked()).toBe(3);
+  });
+
   it('un-ticks', async () => {
     const { result } = renderHook(({ store }) => useCompletion(store, '2026-11-05', 'p1'), { initialProps: { store: createLocalStore() } });
     await act(async () => result.current.setStep('s1', true));

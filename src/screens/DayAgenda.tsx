@@ -16,6 +16,7 @@ import { TIMES_OF_DAY, type Person } from '../data/types';
 import { useDocs } from '../data/useDocs';
 import { useRoutineSet } from '../data/useRoutineSet';
 import { doneOn, overdue, showsOn, tick, untick, type Chore } from '../lists/chores';
+import { starChange } from '../lists/stars';
 
 interface AgendaItem {
   key: string;
@@ -47,7 +48,7 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
     ...parents.map((p): Person => ({ id: p.id, name: p.name, role: 'parent', colour: PARENT_COLOUR })),
   ];
   const routines = useRoutineSet(store, children.flatMap((c) => TIMES_OF_DAY.map((t) => seedFor(c.id, t))));
-  const days = useDocs<{ doneStepIds?: string[] }>(store, children.map((c) => ['days', dayDocId(today, c.id)]));
+  const days = useDocs<{ doneStepIds?: string[]; starredStepIds?: string[] }>(store, children.map((c) => ['days', dayDocId(today, c.id)]));
   const chores = useDocs<{ items?: Chore[] }>(store, people.map((p) => ['chores', p.id]));
 
   const items: AgendaItem[] = [];
@@ -59,10 +60,12 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
         children.forEach((c, ci) => {
           const step = lists[ci][i];
           if (!step) return;
-          const done = days.docs[`days/${dayDocId(today, c.id)}`]?.doneStepIds?.includes(step.id) ?? false;
+          const rec = days.docs[`days/${dayDocId(today, c.id)}`];
+          const done = rec?.doneStepIds?.includes(step.id) ?? false;
+          const alreadyStarred = rec?.starredStepIds?.includes(step.id) ?? false;
           items.push({
             key: `${c.id}_${step.id}`, person: c, title: step.title, image: step.image, note: TIME_LABELS[tod], done,
-            onSet: (d) => void store.setStepDone(today, c.id, step.id, d),
+            onSet: (d) => void store.setStepDone(today, c.id, step.id, d, starChange({ done: d, alreadyStarred, stars: step.stars ?? 1 })),
           });
         });
       }

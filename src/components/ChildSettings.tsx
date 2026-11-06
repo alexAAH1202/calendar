@@ -5,6 +5,8 @@ import { ConfirmButton } from './ConfirmButton';
 import { EmojiPicker } from './EmojiPicker';
 import { StepImage } from './StepImage';
 import { Tabs } from './Tabs';
+import { useStore } from '../data/StoreContext';
+import { useReward } from '../lists/useReward';
 
 interface Props {
   person: Person;
@@ -19,6 +21,9 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
   const profile = profileOf(person);
   const [name, setName] = useState(person.name);
   const [picking, setPicking] = useState(false);
+  const reward = useReward(useStore(), person.id);
+  const [rewardLabel, setRewardLabel] = useState(reward.reward.label);
+  useEffect(() => setRewardLabel(reward.reward.label), [reward.reward.label]);
   useEffect(() => setName(person.name), [person.id, person.name]);
 
   const set = <K extends keyof SensoryProfile>(key: K, value: SensoryProfile[K]) =>
@@ -63,6 +68,10 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
         </div>
       </div>
 
+      <Setting label="Show the routine as">
+        <Tabs<SensoryProfile['layout']> label="Show the routine as" value={profile.layout} onChange={(v) => set('layout', v)}
+          options={[{ value: 'checklist', label: 'Checklist' }, { value: 'firstThen', label: 'First – Then' }]} />
+      </Setting>
       <Setting label="Show">
         <Tabs<SymbolMode> label="Show" value={profile.symbolMode} onChange={(v) => set('symbolMode', v)}
           options={[{ value: 'symbols', label: 'Symbols' }, { value: 'symbolsText', label: 'Symbols and words' }, { value: 'text', label: 'Words' }]} />
@@ -94,6 +103,21 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
         <Tabs<string> label="Sound when ticking" value={profile.sound ? 'on' : 'off'} onChange={(v) => set('sound', v === 'on')}
           options={[{ value: 'off', label: 'Off' }, { value: 'on', label: 'Soft chime' }]} />
       </Setting>
+
+      <div className="field">
+        <span className="field-label">Reward: ⭐ {reward.reward.banked} of {reward.reward.target} stars banked</span>
+        <div className="add-step">
+          <input id="reward-label" value={rewardLabel} onChange={(e) => setRewardLabel(e.target.value)}
+            onBlur={() => rewardLabel.trim() && reward.change({ label: rewardLabel.trim().slice(0, 40) })}
+            onKeyDown={(e) => e.key === 'Enter' && rewardLabel.trim() && reward.change({ label: rewardLabel.trim().slice(0, 40) })}
+            aria-label="Reward" />
+        </div>
+        <Tabs<string> label="Stars needed" value={String(reward.reward.target)} onChange={(v) => reward.change({ target: Number(v) })}
+          options={['5', '10', '20', '30', '50'].map((v) => ({ value: v, label: `${v} ⭐` }))} />
+        <ConfirmButton className="btn" confirmText={`Tap again: take ${reward.reward.target} stars off`} onConfirm={reward.given}>
+          Reward given
+        </ConfirmButton>
+      </div>
 
       {canDelete && (
         <ConfirmButton confirmText={`Tap again to remove ${person.name}`} onConfirm={onDelete}>

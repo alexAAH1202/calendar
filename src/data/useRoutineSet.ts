@@ -7,6 +7,12 @@ import type { FamilyStore } from './store';
 import type { Routine, Step } from './types';
 
 type Changes = Record<string, Step[]>;
+/** Firestore refuses undefined values: a cleared timer is removed, not stored as undefined. */
+const withoutEmpty = (s: Step): Step => {
+  const out = { ...s };
+  if (!out.timerSeconds) delete out.timerSeconds;
+  return out;
+};
 const sameSteps = (a: Step[], b: Step[]) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
@@ -106,6 +112,9 @@ export function useRoutineSet(store: FamilyStore, seeds: Routine[]) {
       one(rid, [...stepsOf(rid), fresh({ title, image: `emoji:${emoji}`, stars: 1 })]),
     setEmoji: (rid: string, id: string, emoji: string) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? { ...s, image: `emoji:${emoji}` } : s))),
+    /** Changes a step's timer or stars. */
+    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'timerSeconds' | 'stars'>>) =>
+      one(rid, stepsOf(rid).map((s) => (s.id === id ? withoutEmpty({ ...s, ...patch }) : s))),
     /** Moves a step to the end of another list. One undo puts it back. */
     moveTo: (fromRid: string, toRid: string, id: string) => {
       const step = stepsOf(fromRid).find((s) => s.id === id);

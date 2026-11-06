@@ -10,6 +10,9 @@ import { useRoutineSet } from '../data/useRoutineSet';
 import { ChildStep } from './ChildStep';
 import { playSoftCue } from './softCue';
 import { Avatar } from './Avatar';
+import { FirstThen } from './FirstThen';
+import { RewardBar } from './RewardBar';
+import { useReward } from '../lists/useReward';
 
 /** The routine a person has for a time of day before anything is saved. */
 export function seedFor(personId: string, tod: TimeOfDay): Routine {
@@ -24,6 +27,7 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
   const seed = seedFor(person.id, tod);
   const set = useRoutineSet(store, [seed]);
   const { done, setStep, loaded: dayLoaded } = useCompletion(store, day, person.id);
+  const { reward } = useReward(store, person.id);
   const palette = PALETTES[profile.palette];
   const steps = set.routines[seed.id]?.steps ?? [];
   const visible = displaySteps(steps, done, profile.completedBehaviour);
@@ -42,7 +46,7 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
 
   const tick = (stepId: string, isDone: boolean) => {
     if (isDone && profile.sound) playSoftCue();
-    setStep(stepId, isDone);
+    setStep(stepId, isDone, steps.find((s) => s.id === stepId)?.stars ?? 1);
   };
 
   return (
@@ -53,18 +57,24 @@ export function ChildColumn({ person, day, tod }: { person: Person; day: string;
         <h2>{person.name}</h2>
         <span className="child-tod">{TIME_LABELS[tod]}</span>
       </header>
+      <RewardBar personId={person.id} />
       {!set.loaded || !dayLoaded ? (
         <p className="hint" aria-live="polite">Loading…</p>
       ) : steps.length === 0 ? (
         <p className="hint">Nothing to do this {TIME_LABELS[tod].toLowerCase()}.</p>
       ) : (
         <>
-          <ol className="steps">
-            {visible.map((step) => (
-              <ChildStep key={step.id} step={step} done={done.has(step.id)} symbolMode={profile.symbolMode}
-                onSetDone={(d) => tick(step.id, d)} />
-            ))}
-          </ol>
+          {profile.layout === 'firstThen' ? (
+            <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode} sound={profile.sound}
+              rewardLabel={reward.label} />
+          ) : (
+            <ol className="steps">
+              {visible.map((step) => (
+                <ChildStep key={step.id} step={step} done={done.has(step.id)} symbolMode={profile.symbolMode}
+                  timerSeconds={step.timerSeconds} sound={profile.sound} onSetDone={(d) => tick(step.id, d)} />
+              ))}
+            </ol>
+          )}
           {allDone && <p className="all-done"><span aria-hidden="true">✓</span> All done</p>}
         </>
       )}

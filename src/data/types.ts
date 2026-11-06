@@ -36,6 +36,8 @@ export interface SensoryProfile {
   palette: PaletteName;
   /** 0.6 (dim) to 1 (full). */
   brightness: number;
+  /** The whole list, or one step at a time as "First … Then …". */
+  layout: 'checklist' | 'firstThen';
 }
 
 export interface Person {
@@ -62,4 +64,6 @@ export interface Template {
 
 export interface DayRecord {
   doneStepIds: string[];
+  /** Steps that have earned their stars today (see lists/stars.ts). */
+  starredStepIds?: string[];
 }

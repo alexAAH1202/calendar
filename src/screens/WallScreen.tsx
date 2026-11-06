@@ -17,6 +17,14 @@ import { ChoresView } from '../lists/ChoresView';
 import { DayAgenda } from './DayAgenda';
 import { RoutinesView } from './RoutinesView';
 import { SetupScreen } from './SetupScreen';
+import { inSleepWindow } from '../wall/schedule';
+import { SleepScreen } from '../wall/SleepScreen';
+import { reloadApp } from '../wall/pwa';
+import { useLastInput } from '../wall/useLastInput';
+import { useNightlyReload } from '../wall/useNightlyReload';
+import { useUpdateReady } from '../wall/useUpdateReady';
+import { useWakeLock } from '../wall/useWakeLock';
+import { useWallSettings } from '../wall/useWallSettings';
 
 type View = 'agenda' | 'today' | 'routines' | 'chores' | 'braindump' | 'week' | 'month';
 
@@ -47,6 +55,17 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const exitSetup = useCallback(() => setSetup(false), []);
   const backHome = useCallback(() => setView(home), [home]);
   const clearPanelDay = useCallback(() => setPanelDay(null), []);
+  // The wall tablet only: keep the screen on, sleep on a schedule, reload once a night.
+  const wall = useWallSettings(store).settings;
+  const lastInput = useLastInput();
+  const wakeLockHeld = useWakeLock(!isPhone);
+  useNightlyReload(store, !isPhone && wall.nightlyReload, lastInput);
+  const [awake, setAwake] = useState(false);
+  const sleepAgain = useCallback(() => setAwake(false), []);
+  const sleepTime = !isPhone && wall.sleepOn && inSleepWindow(now, wall.sleepFrom, wall.sleepTo);
+  // Woken during sleep time: sleeps again after two quiet minutes.
+  useIdleExit(sleepTime && awake, sleepAgain);
+  const updateReady = useUpdateReady();
   // Setup closes after two quiet minutes on the wall.
   useIdleExit(setup && !isPhone, exitSetup);
   // The wall drifts back to Today after five quiet minutes on any other tab, editing included.
@@ -57,7 +76,14 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
 
   if (!loaded || !calendar.known) return <main className="screen screen--child"><p className="hint">Loading…</p></main>;
 
-  if (setup) return <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine} />;
+  if (sleepTime && !awake) return <SleepScreen now={now} onWake={() => setAwake(true)} />;
+
+  if (setup) {
+    return (
+      <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine}
+        wakeLockHeld={isPhone ? undefined : wakeLockHeld} />
+    );
+  }
 
   const childView = view === 'today' || view === 'agenda';
   return (
@@ -73,6 +99,9 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'week', label: 'Week', icon: '🗓️' },
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
+        {isPhone && updateReady && (
+          <button type="button" className="pill" onClick={() => void reloadApp()}>Update ready</button>
+        )}
         {isPhone ? (
           <button type="button" className="pill pill--round" aria-label="Parent: set up the app" onClick={() => setSetup(true)}>⚙️</button>
         ) : (
@@ -87,7 +116,12 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
       ) : view === 'chores' ? (
         <ChoresView children={children} day={day} />
       ) : view === 'braindump' ? (
-        <section className="edit-surface" aria-label="Brain dump"><BrainDump /></section>
+        <section className="edit-surface" aria-label="Brain dump">
+          <div className="editor-row editor-row--end">
+            <a className="btn" href="https://www.coles.com.au/" target="_blank" rel="noopener noreferrer">🛒 Coles groceries</a>
+          </div>
+          <BrainDump />
+        </section>
       ) : view === 'week' || view === 'month' ? (
         <CalendarView key={view} now={now} mode={view} />
       ) : calendar.configured ? (

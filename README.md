@@ -1,7 +1,7 @@
 # Family Wall Calendar
 
 A calm family wall calendar PWA for a 15.6" Android tablet (landscape) plus two parents' phones.
-Built one phase at a time from the tech spec. **Current state: Phase 5 (chores and brain dump) deployed to https://calendar-c8022.web.app.
+Built one phase at a time from the tech spec. **Current state: Phase 6 (calm polish) deployed to https://calendar-c8022.web.app: all six phases built.
 The calendar needs the one-time Apps Script setup in [`apps-script/README.md`](./apps-script/README.md).**
 
 Without Firebase settings the app runs on one device only, using local storage (as in Phase 1).
@@ -41,6 +41,44 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 - Both parents can read everything in the family. The Parent hold is a child lock, not security.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
+
+## Phase 6: what is built
+
+- **Timers:** a step can have a 1–15 minute timer (⋯ on the step in Routines). On the wall the child taps ▶; a
+  shrinking ring and digits count down; tap to pause or carry on. Silent unless the child's sound is on; at zero
+  it just says "Time’s up" (no flashing, no animation).
+- **First – Then:** per child (Parent → Children → Show the routine as). The next step is a big tickable card,
+  the one after it is shown beside it; after the last step, "Then" shows the reward.
+- **Stars and rewards** (`rewards/{childId}`): each step earns 0–3 stars (default 1) the first time it is ticked
+  that day; un-ticking that day takes them back; the midnight swap never touches the bank. The tick, the day's
+  star marker and the bank change in one batch. Each child's column shows "⭐ 12 / 20 · Movie night" with a bar.
+  Parent → Children sets the reward and target and has "Reward given" (takes the target off the bank).
+- **Wall tablet** (Parent → Wall): sleep screen on a schedule (default 7:30 pm–6:30 am; black with a small dim
+  clock; a touch wakes it; it sleeps again after two quiet minutes); the screen is kept on with the Screen Wake
+  Lock API, asked again whenever the app comes back to the front; a nightly reload between 3 and 5 am, once,
+  only after five minutes without a touch and with nothing waiting to sync (checked with Firestore).
+- **Installable app (PWA):** manifest (full screen, plain blue icon) and a service worker that caches the app and
+  its font, so the wall opens with no connection (after its first load). Firebase's `/__/` sign-in pages are never
+  served from the cache. New versions wait: the wall loads them at the nightly reload, a phone shows
+  "Update ready", and Parent → Wall has a button. Orientation is "any", not the spec's "landscape", because parents
+  install it on phones too; the tablet stays landscape by itself.
+- **Groceries:** "🛒 Coles groceries" on the Brain dump tab opens coles.com.au (the Coles app if Android hands the
+  link to it).
+
+## Phase 6 acceptance test
+
+Leave the tablet running a full day: the screen stays on, sleeps and wakes at the set times, wakes on a touch,
+and is fresh the next morning.
+
+## Phase 6: not tested yet
+
+- **The full unattended day on the real tablet.** Simulated in a browser with a controlled clock: asleep at
+  6:00, woken by a touch, asleep again after two quiet minutes, awake at 6:31, asleep at 7:32 pm, clean lists and
+  kept stars after midnight, no reload at 3 am while offline with an unsynced tick, one reload once back online.
+- Whether the tablet honours the wake lock, and its own battery and screen settings (see the spec's tablet notes).
+- Installing to the home screen on Android, app pinning, and whether Coles' link opens their app.
+- The wake lock in the test was a stand-in; the real API was not exercised.
+- Timer sound on the tablet speaker.
 
 ## Main screen and Parent (after Phase 5)
 

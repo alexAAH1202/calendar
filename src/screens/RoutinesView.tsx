@@ -97,6 +97,7 @@ function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeO
           </p>
           <EditList
             steps={steps}
+            metaFor={(st) => [st.timerSeconds ? `⏱ ${st.timerSeconds / 60} min` : '', st.stars ? '⭐'.repeat(st.stars) : 'no stars'].filter(Boolean).join(' · ')}
             expandedId={expandedId}
             onDragMove={(a, b) => set.dragMove(rid, a, b)}
             onUp={(id) => set.moveUp(rid, id)}
@@ -111,6 +112,18 @@ function RoutineEditor({ child, currentTod }: { child: Person; currentTod: TimeO
                     Move to {TIME_LABELS[t].toLowerCase()}
                   </button>
                 ))}
+                <label className="inline-field">
+                  Timer
+                  <select value={String(step.timerSeconds ?? 0)} onChange={(e) => set.updateStep(rid, step.id, { timerSeconds: Number(e.target.value) })}>
+                    {[0, 60, 120, 300, 600, 900].map((v) => <option key={v} value={v}>{v ? `${v / 60} min` : 'No timer'}</option>)}
+                  </select>
+                </label>
+                <label className="inline-field">
+                  Stars
+                  <select value={String(step.stars ?? 1)} onChange={(e) => set.updateStep(rid, step.id, { stars: Number(e.target.value) })}>
+                    {[0, 1, 2, 3].map((v) => <option key={v} value={v}>{v ? '⭐'.repeat(v) : 'None'}</option>)}
+                  </select>
+                </label>
                 <ConfirmButton confirmText="Tap again to delete"
                   onConfirm={() => { set.remove(rid, step.id); setExpandedId(null); }}>
                   Delete

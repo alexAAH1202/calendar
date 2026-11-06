@@ -8,8 +8,9 @@ import { PERSON_COLOURS } from '../data/profile';
 import { useStore } from '../data/StoreContext';
 import { routineId } from '../data/timeOfDay';
 import { TIMES_OF_DAY, type Person } from '../data/types';
+import { WallSetup } from '../wall/WallSetup';
 
-type Section = 'children' | 'calendar' | 'family';
+type Section = 'children' | 'calendar' | 'wall' | 'family';
 
 interface Props {
   people: Person[];
@@ -17,10 +18,12 @@ interface Props {
   familyPanel?: ReactNode;
   onExit: () => void;
   header: ReactNode;
+  /** The wall tablet's screen lock state; undefined on phones. */
+  wakeLockHeld?: boolean;
 }
 
 /** Parent: setting up the app. Children and their settings, the calendar connection, the family. */
-export function SetupScreen({ people, familyPanel, onExit, header }: Props) {
+export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld }: Props) {
   const store = useStore();
   const [section, setSection] = useState<Section>('children');
   const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
@@ -56,12 +59,15 @@ export function SetupScreen({ people, familyPanel, onExit, header }: Props) {
           options={[
             { value: 'children', label: 'Children', icon: '🧒' },
             { value: 'calendar', label: 'Calendar', icon: '🔗' },
+            { value: 'wall', label: 'Wall', icon: '🖥️' },
             ...(familyPanel ? [{ value: 'family' as const, label: 'Family', icon: '👪' }] : []),
           ]} />
       </div>
 
       {section === 'calendar' ? (
         <CalendarSetup />
+      ) : section === 'wall' ? (
+        <WallSetup wakeLockHeld={wakeLockHeld} />
       ) : section === 'family' ? (
         familyPanel
       ) : (

@@ -4,8 +4,10 @@ import {
   collection,
   deleteDoc,
   doc,
+  increment,
   onSnapshot,
   setDoc,
+  waitForPendingWrites,
   writeBatch,
   type Firestore,
 } from 'firebase/firestore';
@@ -43,15 +45,22 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
     },
     subscribeDay(day, pid, cb) {
       return onSnapshot(familyDoc('days', dayDocId(day, pid)), (snap) => {
-        cb((snap.data()?.doneStepIds as string[] | undefined) ?? []);
+        const d = snap.data() ?? {};
+        cb({ doneStepIds: (d.doneStepIds as string[]) ?? [], starredStepIds: (d.starredStepIds as string[]) ?? [] });
       });
     },
-    async setStepDone(day, pid, stepId, done) {
-      setDoc(
-        familyDoc('days', dayDocId(day, pid)),
-        { personId: pid, date: day, doneStepIds: done ? arrayUnion(stepId) : arrayRemove(stepId) },
-        { merge: true },
-      ).catch(reportError);
+    async setStepDone(day, pid, stepId, done, starDelta = 0) {
+      // One batch: the tick, the star marker and the bank move together, also offline.
+      const batch = writeBatch(db);
+      const dayData: Record<string, unknown> = { personId: pid, date: day, doneStepIds: done ? arrayUnion(stepId) : arrayRemove(stepId) };
+      if (starDelta > 0) dayData.starredStepIds = arrayUnion(stepId);
+      if (starDelta < 0) dayData.starredStepIds = arrayRemove(stepId);
+      batch.set(familyDoc('days', dayDocId(day, pid)), dayData, { merge: true });
+      if (starDelta) batch.set(familyDoc('rewards', pid), { banked: increment(starDelta) }, { merge: true });
+      batch.commit().catch(reportError);
+    },
+    async addStars(pid, delta) {
+      setDoc(familyDoc('rewards', pid), { banked: increment(delta) }, { merge: true }).catch(reportError);
     },
     subscribePeople(cb) {
       return onSnapshot(collection(db, 'families', familyId, 'people'), (snap) =>
@@ -99,6 +108,13 @@ export function createFirestoreStore(db: Firestore, familyId: string): FamilySto
     },
     async removeDoc(path) {
       deleteDoc(familyDoc(...path)).catch(reportError);
+    },
+    hasPendingWrites() {
+      // Resolves once everything written here is on the server; offline it never does, so give up after 3 s.
+      return Promise.race([
+        waitForPendingWrites(db).then(() => false),
+        new Promise<boolean>((r) => setTimeout(() => r(true), 3000)),
+      ]);
     },
     onWriteError(cb) {
       errorListeners.add(cb);

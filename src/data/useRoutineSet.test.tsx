@@ -25,6 +25,7 @@ function fakeStore(overrides: Partial<FamilyStore> = {}) {
     saveRoutine: async () => {},
     subscribeDay: noop,
     setStepDone: async () => {},
+    addStars: async () => {},
     subscribePeople: noop,
     savePerson: async () => {},
     updatePerson: async () => {},
@@ -36,6 +37,7 @@ function fakeStore(overrides: Partial<FamilyStore> = {}) {
     putDoc: async () => {},
     watchCollection: noop,
     removeDoc: async () => {},
+    hasPendingWrites: async () => false,
     onWriteError: noop,
     ...overrides,
   };

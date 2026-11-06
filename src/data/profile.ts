@@ -8,6 +8,7 @@ export const DEFAULT_PROFILE: SensoryProfile = {
   completedBehaviour: 'stay',
   palette: 'calm',
   brightness: 1,
+  layout: 'checklist',
 };
 
 export function profileOf(person: Person): SensoryProfile {

@@ -58,6 +58,11 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     notify(key, true);
   };
 
+  const addStars = async (pid: string, delta: number) => {
+    const prev = read<{ banked?: number }>(`rewards/${pid}`) ?? {};
+    await write(`rewards/${pid}`, { ...prev, banked: (prev.banked ?? 0) + delta });
+  };
+
   const savePerson = async (person: Person) => {
     if (!storage.getItem(PREFIX + 'people:init')) {
       // The first save makes the example child a real, stored person.
@@ -84,16 +89,20 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     },
     subscribeDay(day, pid, cb) {
       const key = dayPath(day, pid);
-      const emit = () => cb(read<DayRecord>(key)?.doneStepIds ?? []);
+      const emit = () => cb({ doneStepIds: [], starredStepIds: [], ...read<DayRecord>(key) });
       emit();
       return watch(key, emit);
     },
-    async setStepDone(day, pid, stepId, done) {
+    async setStepDone(day, pid, stepId, done, starDelta = 0) {
       const key = dayPath(day, pid);
-      const prev = read<DayRecord>(key)?.doneStepIds ?? [];
-      const next = done ? (prev.includes(stepId) ? prev : [...prev, stepId]) : prev.filter((s) => s !== stepId);
-      await write(key, { doneStepIds: next });
+      const rec = read<DayRecord>(key);
+      const toggle = (list: string[] = [], on: boolean) =>
+        on ? (list.includes(stepId) ? list : [...list, stepId]) : list.filter((s) => s !== stepId);
+      const starred = starDelta > 0 ? toggle(rec?.starredStepIds, true) : starDelta < 0 ? toggle(rec?.starredStepIds, false) : rec?.starredStepIds ?? [];
+      await write(key, { doneStepIds: toggle(rec?.doneStepIds, done), starredStepIds: starred });
+      if (starDelta) await addStars(pid, starDelta);
     },
+    addStars,
     subscribePeople(cb) {
       // A device that has never saved anyone starts with the example child.
       const emit = () => cb(storage.getItem(PREFIX + 'people:init') ? list<Person>('people/') : [SEED_CHILD]);
@@ -151,6 +160,9 @@ export function createLocalStore(storage: Storage = window.localStorage): Family
     },
     async removeDoc(path) {
       remove(path.join('/'));
+    },
+    async hasPendingWrites() {
+      return false;
     },
     onWriteError() {
       return () => {};
