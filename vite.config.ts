@@ -36,6 +36,10 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // A new version takes over as soon as it has downloaded, even when an older copy is open:
+        // the open page keeps running unchanged, and the next reload or opening shows the new one.
+        skipWaiting: true,
+        clientsClaim: true,
         // The app shell, bundled font and icons, so the wall opens with no connection.
         globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
         navigateFallback: 'index.html',
