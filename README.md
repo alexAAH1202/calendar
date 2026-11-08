@@ -120,8 +120,10 @@ between children; Undo reverses it (the Routines tab now loads every child's lis
 - **Timers:** removed at the family's request (steps no longer show a ▶ timer).
 - **First – Then:** per child (Parent → Children → Show the routine as). The next step is a big tickable card,
   the one after it is shown beside it; after the last step, "Then" shows the reward.
-- **Stars and rewards** (`rewards/{childId}`): each step earns 0–3 stars (default 1) the first time it is ticked
-  that day; un-ticking that day takes them back; the midnight swap never touches the bank. The tick, the day's
+- **Stars and rewards** (`rewards/{childId}`): stars are earned by **chores**, not routine steps (changed at the
+  family's request): each chore earns 0–3 stars (default 1) each day it is done, taken back by an untick that day.
+  Parents' chores earn none. Routine ticks still get the cheer, without stars. Parent → Children has Reward given and
+  Reset stars to 0. The tick, the day's
   star marker and the bank change in one batch. Each child's column shows "⭐ 12 / 20 · Movie night" with a bar.
   Parent → Children sets the reward and target and has "Reward given" (takes the target off the bank).
 - **Wall tablet** (Parent → Wall): sleep screen on a schedule (default 7:30 pm–6:30 am; black with a small dim

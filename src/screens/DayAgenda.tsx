@@ -15,7 +15,7 @@ import { TIME_LABELS, routineId } from '../data/timeOfDay';
 import { TIMES_OF_DAY, type Person } from '../data/types';
 import { useDocs } from '../data/useDocs';
 import { useRoutineSet } from '../data/useRoutineSet';
-import { doneOn, overdue, showsOn, tick, untick, type Chore } from '../lists/chores';
+import { choreStarDelta, doneOn, overdue, showsOn, tick, untick, type Chore } from '../lists/chores';
 import { starChange } from '../lists/stars';
 import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
@@ -71,7 +71,8 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
           const alreadyStarred = rec?.starredStepIds?.includes(step.id) ?? false;
           items.push({
             key: `${c.id}_${step.id}`, person: c, title: step.title, image: step.image, note: TIME_LABELS[tod], done,
-            onSet: (d) => void store.setStepDone(today, c.id, step.id, d, starChange({ done: d, alreadyStarred, stars: step.stars ?? 1 })),
+            // Routine steps earn no stars: treats come from chores.
+            onSet: (d) => void store.setStepDone(today, c.id, step.id, d, starChange({ done: d, alreadyStarred, stars: 0 })),
           });
         });
       }
@@ -82,11 +83,15 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
     for (const c of forMode(list, mode)) {
       const shows = isToday ? showsOn(c, key) : c.due === key && !c.done;
       if (!shows) continue;
-      const setChore = (d: boolean) =>
+      const setChore = (d: boolean) => {
         void store.putDoc(['chores', p.id], {
           items: list.map((x) => (x.id === c.id ? (d ? tick(x, today) : untick(x, today)) : x)),
           updatedAt: Date.now(),
         });
+        // Children earn the chore's stars (taken back on an untick); parents' chores earn none.
+        const delta = p.role === 'child' ? choreStarDelta(c, d, today) : 0;
+        if (delta) void store.addStars(p.id, delta);
+      };
       items.push({
         key: `${p.id}_${c.id}`, person: p, title: c.title, image: c.image,
         note: overdue(c, key) ? `Chore · from ${format(new Date(`${c.due}T12:00:00`), 'EEEE')}` : 'Chore',

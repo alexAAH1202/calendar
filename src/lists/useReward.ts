@@ -15,5 +15,7 @@ export function useReward(store: FamilyStore, personId: string) {
     change: (c: Partial<Pick<Reward, 'target' | 'label'>>) => void store.putDoc(['rewards', personId], c, true),
     /** The reward was given: its stars come off the bank (any extra stay). */
     given: () => void store.addStars(personId, -reward.target),
+    /** Empties the bank. */
+    reset: () => void store.putDoc(['rewards', personId], { banked: 0 }, true),
   };
 }

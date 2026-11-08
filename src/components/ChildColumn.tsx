@@ -14,7 +14,6 @@ import { playAllDoneCue, playSoftCue } from './softCue';
 import { Avatar } from './Avatar';
 import { FirstThen } from './FirstThen';
 import { RewardBar } from './RewardBar';
-import { useReward } from '../lists/useReward';
 import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
 import { FinishBy } from '../now/FinishBy';
@@ -34,7 +33,6 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   const seed = seedFor(person.id, tod);
   const set = useRoutineSet(store, [seed]);
   const { done, setStep, loaded: dayLoaded } = useCompletion(store, day, person.id);
-  const { reward } = useReward(store, person.id);
   const palette = PALETTES[profile.palette];
   const mode = useMode();
   const school = useSettingsDoc<SchoolSettings>(store, 'school', DEFAULT_SCHOOL).value;
@@ -67,7 +65,8 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   }, [cheer]);
 
   const tick = (stepId: string, isDone: boolean) => {
-    const stars = steps.find((s) => s.id === stepId)?.stars ?? 1;
+    // Routine steps earn no stars: treats come from chores.
+    const stars = 0;
     const finishes = isDone && !done.has(stepId) && doneCount + 1 === steps.length;
     if (isDone && profile.sound) (finishes ? playAllDoneCue : playSoftCue)();
     setStep(stepId, isDone, stars);
@@ -113,8 +112,7 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
       ) : (
         <>
           {profile.layout === 'firstThen' ? (
-            <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode}
-              rewardLabel={reward.label} />
+            <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode} />
           ) : (
             <ol className="steps">
               {visible.map((step) => (

@@ -12,14 +12,14 @@ import { useStore } from '../data/StoreContext';
 import type { Person } from '../data/types';
 import { moveById, moveDown, moveUp, removeById } from '../ordering/order';
 import { ListNotices } from './ListNotices';
-import { REPEAT_LABELS, type Chore, type Repeat } from './chores';
+import { REPEAT_LABELS, choreStars, type Chore, type Repeat } from './chores';
 import { useItemList } from './useItemList';
 
 const nice = (key?: string) => (key ? format(new Date(`${key}T12:00:00`), 'EEE d MMM') : '');
 
 /** "Every week · next Mon 9 Nov", "Once · Fri 13 Nov", "Once · any day", "Done". */
 export function choreMeta(c: Chore): string {
-  const essential = c.essential ? ' · ✱ essential' : '';
+  const essential = (c.essential ? ' · ✱ essential' : '') + (choreStars(c) ? ` · ${'⭐'.repeat(choreStars(c))}` : ' · no stars');
   if (c.repeat === 'none') return (c.done ? 'Done' : `Once · ${c.due ? nice(c.due) : 'any day'}`) + essential;
   return `${REPEAT_LABELS[c.repeat]} · next ${nice(c.due)}${essential}`;
 }
@@ -59,6 +59,7 @@ function ChoreEditor({ personId, name, today }: { personId: string; name: string
   const [emoji, setEmoji] = useState(DEFAULT_EMOJI);
   const [repeat, setRepeat] = useState<Repeat>('none');
   const [due, setDue] = useState(today);
+  const [stars, setStars] = useState(1);
   const active = list.items.filter((c) => !c.done);
   const finished = list.items.filter((c) => c.done);
 
@@ -67,7 +68,7 @@ function ChoreEditor({ personId, name, today }: { personId: string; name: string
   const add = (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const chore: Chore = { id: newId('c'), title: title.trim(), image: `emoji:${emoji}`, repeat, done: false };
+    const chore: Chore = { id: newId('c'), title: title.trim(), image: `emoji:${emoji}`, repeat, done: false, stars };
     if (repeat !== 'none' || due) chore.due = due || today;
     list.commit([...list.current(), chore]);
     setTitle('');
@@ -110,6 +111,12 @@ function ChoreEditor({ personId, name, today }: { personId: string; name: string
                   {c.repeat === 'none' ? 'Due' : 'Next due'}
                   <input type="date" value={c.due ?? ''} onChange={(e) => change(c.id, (x) => ({ ...x, due: e.target.value || undefined }))} />
                 </label>
+                <label className="inline-field">
+                  Stars earned
+                  <select value={String(choreStars(c))} onChange={(e) => change(c.id, (x) => ({ ...x, stars: Number(e.target.value) }))}>
+                    {[0, 1, 2, 3].map((v) => <option key={v} value={v}>{v ? '⭐'.repeat(v) : 'None'}</option>)}
+                  </select>
+                </label>
                 <label className="check">
                   <input type="checkbox" checked={!!c.essential}
                     onChange={(e) => change(c.id, ({ essential: _e, ...x }) => (e.target.checked ? { ...x, essential: true } : x))} />
@@ -131,6 +138,9 @@ function ChoreEditor({ personId, name, today }: { personId: string; name: string
             </select>
             <input id="chore-due" type="date" value={due} onChange={(e) => setDue(e.target.value)}
               aria-label={repeat === 'none' ? 'Due (leave empty for any day)' : 'First due'} />
+            <select id="chore-stars" value={String(stars)} onChange={(e) => setStars(Number(e.target.value))} aria-label="Stars earned">
+              {[0, 1, 2, 3].map((v) => <option key={v} value={v}>{v ? `${'⭐'.repeat(v)} earned` : 'No stars'}</option>)}
+            </select>
             <button type="submit" className="btn btn--primary" disabled={!title.trim()}>Add</button>
           </form>
           {picking && (

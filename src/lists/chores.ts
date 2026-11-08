@@ -28,6 +28,20 @@ export interface Chore {
   prevDue?: string;
   /** Still shown on a low-energy or running-late day. */
   essential?: boolean;
+  /** Stars a child earns for doing it (default 1; 0 for none). Parents' chores earn none. */
+  stars?: number;
+}
+
+/** Stars this chore is worth. */
+export const choreStars = (c: Chore) => c.stars ?? 1;
+
+/**
+ * Stars to add (or take back) when a child ticks or un-ticks a chore today: earned once per
+ * day it is done, so a repeating chore earns again next time; an untick today takes them back.
+ */
+export function choreStarDelta(c: Chore, done: boolean, today: string): number {
+  if (done) return c.doneOn === today ? 0 : choreStars(c);
+  return c.doneOn === today ? -choreStars(c) : 0;
 }
 
 const parse = (key: string) => new Date(`${key}T12:00:00`);

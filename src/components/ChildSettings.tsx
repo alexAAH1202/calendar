@@ -109,7 +109,7 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
       </Setting>
 
       <div className="field">
-        <span className="field-label">Reward: ⭐ {reward.reward.banked} of {reward.reward.target} stars banked</span>
+        <span className="field-label">Reward: ⭐ {reward.reward.banked} of {reward.reward.target} stars banked. Stars are earned by doing chores (set per chore in Chores).</span>
         <div className="add-step">
           <input id="reward-label" value={rewardLabel} onChange={(e) => setRewardLabel(e.target.value)}
             onBlur={() => rewardLabel.trim() && reward.change({ label: rewardLabel.trim().slice(0, 40) })}
@@ -120,6 +120,9 @@ export function ChildSettings({ person, canDelete, onChange, onDelete }: Props) 
           options={['5', '10', '20', '30', '50'].map((v) => ({ value: v, label: `${v} ⭐` }))} />
         <ConfirmButton className="btn" confirmText={`Tap again: take ${reward.reward.target} stars off`} onConfirm={reward.given}>
           Reward given
+        </ConfirmButton>
+        <ConfirmButton className="btn btn--danger" confirmText="Tap again: set the stars to 0" onConfirm={reward.reset}>
+          Reset stars to 0
         </ConfirmButton>
       </div>
 

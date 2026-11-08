@@ -121,7 +121,7 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
           </p>
           <EditList
             steps={steps}
-            metaFor={(st) => [st.essential ? '✱ essential' : '', st.stars ? '⭐'.repeat(st.stars) : 'no stars'].filter(Boolean).join(' · ')}
+            metaFor={(st) => (st.essential ? '✱ essential' : undefined)}
             expandedId={expandedId}
             onDragMove={(a, b) => set.dragMove(rid, a, b)}
             onUp={(id) => set.moveUp(rid, id)}
@@ -149,12 +149,6 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
                 <label className="check">
                   <input type="checkbox" checked={!!step.essential} onChange={(e) => set.updateStep(rid, step.id, { essential: e.target.checked })} />
                   <span>Essential on low-energy days</span>
-                </label>
-                <label className="inline-field">
-                  Stars
-                  <select value={String(step.stars ?? 1)} onChange={(e) => set.updateStep(rid, step.id, { stars: Number(e.target.value) })}>
-                    {[0, 1, 2, 3].map((v) => <option key={v} value={v}>{v ? '⭐'.repeat(v) : 'None'}</option>)}
-                  </select>
                 </label>
                 <ConfirmButton confirmText="Tap again to delete"
                   onConfirm={() => { set.remove(rid, step.id); setExpandedId(null); }}>

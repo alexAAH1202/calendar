@@ -7,11 +7,10 @@ interface Props {
   done: Set<string>;
   onSetDone: (id: string, done: boolean) => void;
   symbolMode: SymbolMode;
-  rewardLabel: string;
 }
 
-/** One step at a time: "First" the next step to do (tickable, big), "Then" the one after, or the reward. */
-export function FirstThen({ steps, done, onSetDone, symbolMode, rewardLabel }: Props) {
+/** One step at a time: "First" the next step to do (tickable, big), "Then" the one after, or "All done". */
+export function FirstThen({ steps, done, onSetDone, symbolMode }: Props) {
   const open = steps.filter((s) => !done.has(s.id));
   const [first, then] = open;
   if (!first) return null;
@@ -34,7 +33,7 @@ export function FirstThen({ steps, done, onSetDone, symbolMode, rewardLabel }: P
               <span className={symbolMode === 'symbols' ? 'visually-hidden' : ''}>{then.title}</span>
             </>
           ) : (
-            <><span className="step-image" aria-hidden="true">⭐</span><span>{rewardLabel}</span></>
+            <><span className="step-image" aria-hidden="true">🎉</span><span>All done</span></>
           )}
         </div>
       </div>
