@@ -15,7 +15,8 @@ import { useNow } from '../date/useNow';
 import { BrainDump } from '../lists/BrainDump';
 import { ChoresView } from '../lists/ChoresView';
 import { DayAgenda } from './DayAgenda';
-import { RoutinesView } from './RoutinesView';
+import { RoutinesBoard } from './RoutinesBoard';
+import { WhoPicker } from '../components/WhoPicker';
 import { SetupScreen } from './SetupScreen';
 import { ColesButton } from '../wall/ColesButton';
 import { DayModeContext } from '../now/DayModeContext';
@@ -64,6 +65,9 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const exitSetup = useCallback(() => setSetup(false), []);
   const backHome = useCallback(() => setView(home), [home]);
   const clearPanelDay = useCallback(() => setPanelDay(null), []);
+  // A child can show just their own list; back to everyone's after five quiet minutes.
+  const [who, setWho] = useState('all');
+  const showAll = useCallback(() => setWho('all'), []);
   // The wall tablet only: keep the screen on, sleep on a schedule, reload once a night.
   const wall = useWallSettings(store).settings;
   const lastInput = useLastInput();
@@ -82,6 +86,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   // The wall drifts back to Today after five quiet minutes on any other tab, editing included.
   useIdleExit(!setup && view !== home, backHome, 5 * 60_000);
   useIdleExit(!setup && panelDay !== null, clearPanelDay, 5 * 60_000);
+  useIdleExit(!setup && who !== 'all', showAll, 5 * 60_000);
 
   const dateLine = <h1>{format(now, 'EEEE d MMMM')}</h1>;
 
@@ -91,15 +96,17 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
 
   if (setup) {
     return (
-      <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine}
+      <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine} currentTod={tod}
         wakeLockHeld={isPhone ? undefined : wakeLockHeld} />
     );
   }
 
-  const childView = view === 'today' || view === 'agenda';
+  const childView = view === 'today' || view === 'agenda' || view === 'routines';
+  const shownKids = who === 'all' ? children : children.filter((c) => c.id === who);
+  const whoPicker = <WhoPicker children={children} value={children.some((c) => c.id === who) ? who : 'all'} onChange={setWho} />;
   return (
     <DayModeContext.Provider value={dayMode.mode}>
-    <main className={`screen ${childView ? 'screen--child' : ''} screen--wide ${view === 'today' ? 'screen--fit' : ''}`}>
+    <main className={`screen ${childView ? 'screen--child' : ''} screen--wide ${view === 'today' || (view === 'routines' && !isPhone) ? 'screen--fit' : ''}`}>
       <header className="screen-header">
         {dateLine}
         <Tabs<View> label="View" value={view} onChange={setView} withIcons
@@ -130,7 +137,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
       {view === 'agenda' ? (
         <DayAgenda children={children} now={now} />
       ) : view === 'routines' ? (
-        <RoutinesView children={children} currentTod={tod} />
+        <RoutinesBoard children={shownKids} day={day} now={now} currentTod={tod} who={whoPicker} />
       ) : view === 'chores' ? (
         <ChoresView children={children} day={day} />
       ) : view === 'braindump' ? (
@@ -150,15 +157,17 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             <UpNextBar now={now} />
             <DinnerTonight now={now} />
           </div>
+          {children.length > 1 && <div className="editor-row who-row">{whoPicker}</div>}
           <div className="today-layout">
             <TodayPanel now={now} selected={panelDay ?? now} onSelect={setPanelDay} />
-            <ChildBoard children={children} day={day} tod={tod} now={now} />
+            <ChildBoard children={shownKids} day={day} tod={tod} now={now} />
           </div>
         </>
       ) : (
         <>
           <DinnerTonight now={now} />
-          <ChildBoard children={children} day={day} tod={tod} now={now} />
+          {children.length > 1 && <div className="editor-row who-row">{whoPicker}</div>}
+          <ChildBoard children={shownKids} day={day} tod={tod} now={now} />
         </>
       )}
     </main>

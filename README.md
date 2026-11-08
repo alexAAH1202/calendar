@@ -42,6 +42,14 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Routines tab for the children; editing under Parent
+
+- The main screen's **Routines** tab is now for the children: each child's list for Morning, Afternoon or Evening
+  (opens on the current one), to look at and tick, with no editing controls.
+- **Parent (⚙️) → Routines** holds the routine editor (add, reorder, templates, finish time, essentials, duplicate).
+- **Both / Astrid / Ethan** on Today and Routines lets a child show just their own list (wider) or everyone's;
+  it goes back to Both after five quiet minutes.
+
 ## Leave-by times from Google Maps, and school mornings
 
 - **Google Maps:** Parent → Calendar → *Leave-by times from Google Maps*: home address, buffer (default 5 min),

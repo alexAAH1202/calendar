@@ -7,11 +7,12 @@ import { newId } from '../data/ids';
 import { PERSON_COLOURS } from '../data/profile';
 import { useStore } from '../data/StoreContext';
 import { routineId } from '../data/timeOfDay';
-import { TIMES_OF_DAY, type Person } from '../data/types';
+import { TIMES_OF_DAY, type Person, type TimeOfDay } from '../data/types';
 import { WallSetup } from '../wall/WallSetup';
+import { RoutinesView } from './RoutinesView';
 import { TravelSetup } from '../now/TravelSetup';
 
-type Section = 'children' | 'calendar' | 'wall' | 'family';
+type Section = 'children' | 'routines' | 'calendar' | 'wall' | 'family';
 
 interface Props {
   people: Person[];
@@ -21,10 +22,11 @@ interface Props {
   header: ReactNode;
   /** The wall tablet's screen lock state; undefined on phones. */
   wakeLockHeld?: boolean;
+  currentTod: TimeOfDay;
 }
 
 /** Parent: setting up the app. Children and their settings, the calendar connection, the family. */
-export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld }: Props) {
+export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld, currentTod }: Props) {
   const store = useStore();
   const [section, setSection] = useState<Section>('children');
   const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
@@ -59,13 +61,16 @@ export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld 
         <Tabs<Section> label="Setup" value={section} onChange={setSection} withIcons
           options={[
             { value: 'children', label: 'Children', icon: '🧒' },
+            { value: 'routines', label: 'Routines', icon: '✅' },
             { value: 'calendar', label: 'Calendar', icon: '🔗' },
             { value: 'wall', label: 'Wall', icon: '🖥️' },
             ...(familyPanel ? [{ value: 'family' as const, label: 'Family', icon: '👪' }] : []),
           ]} />
       </div>
 
-      {section === 'calendar' ? (
+      {section === 'routines' ? (
+        <RoutinesView children={people} currentTod={currentTod} />
+      ) : section === 'calendar' ? (
         <>
           <CalendarSetup />
           <TravelSetup />

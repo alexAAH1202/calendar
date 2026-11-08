@@ -32,7 +32,7 @@ export function ModeSwitch({ mode, onChange }: { mode: DayMode; onChange: (m: Da
                 </button>
               ))}
             </div>
-            <p className="panel-text">It goes back to a normal day by itself tomorrow. Mark what is essential with ⋯ in Routines and Chores.</p>
+            <p className="panel-text">It goes back to a normal day by itself tomorrow. Mark what is essential with ⋯ in Parent → Routines, and in Chores.</p>
           </div>
         </div>
       )}

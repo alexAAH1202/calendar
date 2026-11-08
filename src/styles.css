@@ -1107,3 +1107,8 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 .column-stats { align-items: start; }
 .column-stats .progress-bar, .column-stats .reward-bar { flex: none; height: 12px; }
 .column-stats .reward { gap: 6px; }
+.screen--fit > .routines-times { flex: none; margin-bottom: 8px; }
+.screen--fit > .child-board { height: 100%; }
+.screen--fit > .who-row { flex: none; margin-bottom: 8px; }
+.who-row, .routines-times { justify-content: flex-start; }
+.tab .avatar { font-size: 15px !important; }

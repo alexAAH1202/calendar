@@ -15,7 +15,7 @@ import { TIMES_OF_DAY, type Person, type Step, type TimeOfDay } from '../data/ty
 import { useRoutineSet, type RoutineSet } from '../data/useRoutineSet';
 import { useTemplates } from '../data/useTemplates';
 
-/** The Routines tab: pick a child and a time of day, then change that list. */
+/** Parent → Routines: pick a child and a time of day, then change that list. */
 export function RoutinesView({ children, currentTod }: { children: Person[]; currentTod: TimeOfDay }) {
   // Every child's lists in one set, so duplicating to another child is one change with one undo.
   const set = useRoutineSet(useStore(), children.flatMap((c) => TIMES_OF_DAY.map((t) => seedFor(c.id, t))));

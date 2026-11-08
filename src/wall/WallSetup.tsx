@@ -17,7 +17,7 @@ export function WallSetup({ wakeLockHeld }: { wakeLockHeld?: boolean }) {
       <h3>School mornings</h3>
       <p className="panel-text">
         Monday to Friday, each child’s morning list counts down to leaving for school: “Leave for school at 8:10 · 14 min left · 3 steps to go”.
-        A finish time set on a list in Routines wins.
+        A finish time set on a list in Parent → Routines wins.
       </p>
       <Tabs<string> label="School countdown" value={school.value.on ? 'on' : 'off'} onChange={(v) => school.change({ on: v === 'on' })}
         options={[{ value: 'on', label: 'On' }, { value: 'off', label: 'Off' }]} />
