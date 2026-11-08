@@ -16,7 +16,7 @@
  */
 
 /** Bumped when actions are added, so the wall can tell an out-of-date script. */
-var VERSION = 3;
+var VERSION = 4;
 var MAX_RANGE_DAYS = 120;
 var MAX_TITLE = 200;
 
@@ -60,6 +60,7 @@ function doPost(e) {
     if (req.action === 'delete') return json_({ ok: true, deleted: deleteEvent_(req) });
     if (req.action === 'version') return json_({ ok: true, version: VERSION });
     if (req.action === 'recipe') return json_({ ok: true, recipe: readRecipe_(req.url) });
+    if (req.action === 'travel') return json_({ ok: true, travel: travelTime_(req) });
     return json_({ ok: false, error: 'unknown_action' });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err).slice(0, 200) });
@@ -283,6 +284,39 @@ function durationText_(iso) {
 function clean_(s) {
   return String(s || '').replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
     .replace(/&frac12;/g, '½').replace(/&frac14;/g, '¼').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Driving time from `origin` to `destination` leaving at `departAt` (epoch ms), with Google Maps'
+ * traffic forecast where it has one (version 4). Uses Apps Script's built-in Maps service: no API key,
+ * no billing. Answers are kept for 10 minutes per route and quarter hour, to stay well inside the daily allowance.
+ */
+function travelTime_(req) {
+  var origin = String(req.origin || '').trim().slice(0, 300);
+  var destination = String(req.destination || '').trim().slice(0, 300);
+  if (!origin || !destination) throw new Error('place_missing');
+  var depart = Math.max(Number(req.departAt) || Date.now(), Date.now() + 60000);
+  var cache = CacheService.getScriptCache();
+  var key = 'travel:' + Utilities.base64EncodeWebSafe(origin + '|' + destination + '|' + Math.floor(depart / 900000)).slice(0, 240);
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  var res = Maps.newDirectionFinder()
+    .setOrigin(origin)
+    .setDestination(destination)
+    .setMode(Maps.DirectionFinder.Mode.DRIVING)
+    .setDepart(new Date(depart))
+    .getDirections();
+  var leg = res && res.routes && res.routes[0] && res.routes[0].legs && res.routes[0].legs[0];
+  if (!leg || !leg.duration) throw new Error('no_route');
+  var seconds = leg.duration_in_traffic ? leg.duration_in_traffic.value : leg.duration.value;
+  var out = {
+    minutes: Math.ceil(seconds / 60),
+    traffic: !!leg.duration_in_traffic,
+    distance: leg.distance ? leg.distance.text : '',
+    to: leg.end_address || destination,
+  };
+  cache.put(key, JSON.stringify(out), 600);
+  return out;
 }
 
 function json_(obj) {

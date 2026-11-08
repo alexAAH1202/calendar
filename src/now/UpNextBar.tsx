@@ -1,7 +1,11 @@
 import { format } from 'date-fns';
 import type { CSSProperties } from 'react';
 import { useCalendarData } from '../calendar/CalendarContext';
-import { leaveText, minutesText, upNext, urgency } from './upNext';
+import { useStore } from '../data/StoreContext';
+import { DEFAULT_TRAVEL, travelFor, type TravelSettings } from './travel';
+import { leaveText, minutesText, upNext, urgency, type UpNext } from './upNext';
+import { useMapsTravel } from './useMapsTravel';
+import { useSettingsDoc } from './useSettingsDoc';
 
 /** How long before leaving the bar starts to shrink. */
 const WINDOW_MS = 60 * 60_000;
@@ -12,9 +16,13 @@ const WINDOW_MS = 60 * 60_000;
  */
 export function UpNextBar({ now }: { now: Date }) {
   const cal = useCalendarData();
-  if (!cal.configured) return null;
-  const next = upNext(cal.events, now, cal.travel);
-  if (!next) return null;
+  const travelSettings = useSettingsDoc<TravelSettings>(useStore(), 'travel', DEFAULT_TRAVEL).value;
+  const found = cal.configured ? upNext(cal.events, now, {}) : undefined;
+  const maps = useMapsTravel(found?.event, now, travelSettings);
+  if (!found) return null;
+  // A time set by hand on the event wins; otherwise Google Maps' drive plus the buffer.
+  const travel = travelFor(found.event, cal.travel, maps, travelSettings);
+  const next: UpNext = { event: found.event, travel: travel?.minutes ?? 0, leaveAt: found.event.start! - (travel?.minutes ?? 0) * 60_000 };
   const left = next.leaveAt - now.getTime();
   const level = urgency(left);
   const c = cal.calendarFor(next.event);
@@ -26,7 +34,7 @@ export function UpNextBar({ now }: { now: Date }) {
       <span className="up-next-title">{next.event.title}</span>
       <span className="up-next-when">
         {format(next.event.start!, 'h:mm a').toLowerCase()}
-        {next.travel ? ` · ${next.travel} min travel · leave ${format(next.leaveAt, 'h:mm a').toLowerCase()}` : ''}
+        {travel ? ` · ${travel.label} · leave ${format(next.leaveAt, 'h:mm a').toLowerCase()}` : ''}
       </span>
       <span className="up-next-left">{leaveText(next, now)}</span>
       <span className="up-next-bar" aria-hidden="true"><span style={{ width: `${fraction * 100}%` }} /></span>

@@ -1,6 +1,6 @@
 import { occurrenceOf, type BridgeCalendar, type BridgeSettings, type CalEvent, type NewEvent } from './types';
 
-export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access' | 'outdated' | 'recurring' | 'gone' | 'noRecipe';
+export type BridgeErrorKind = 'network' | 'unauthorised' | 'notBridge' | 'google' | 'access' | 'outdated' | 'recurring' | 'gone' | 'noRecipe' | 'noRoute';
 
 export class BridgeError extends Error {
   constructor(public kind: BridgeErrorKind, detail = '') {
@@ -29,6 +29,8 @@ export function bridgeErrorText(kind: BridgeErrorKind): string {
       return 'The Apps Script needs updating for this. Paste the latest Code.gs, then Deploy > Manage deployments > ✏️ > Version: New version > Deploy. The address stays the same.';
     case 'recurring':
       return 'This is a repeating event. Change or delete it in Google Calendar, where you can choose this one or all of them.';
+    case 'noRoute':
+      return 'Google Maps could not find a driving route. Check the home address and the event’s place.';
     case 'noRecipe':
       return 'No recipe could be read from that page. Check the address, or type the recipe in yourself.';
     case 'gone':
@@ -85,6 +87,7 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
     if (data.error === 'unknown_action') throw new BridgeError('outdated');
     if (data.error === 'recurring_event') throw new BridgeError('recurring');
     if (data.error === 'event_not_found') throw new BridgeError('gone');
+    if (data.error === 'no_route' || data.error === 'place_missing') throw new BridgeError('noRoute', String(data.error));
     if (data.error === 'no_recipe_found' || data.error === 'bad_url' || String(data.error).startsWith('page_')) throw new BridgeError('noRecipe', String(data.error));
     throw new BridgeError('google', String(data.error ?? 'unknown'));
   }
@@ -109,6 +112,9 @@ export function createBridge(settings: BridgeSettings, fetchImpl: typeof fetch =
     /** Reads a recipe page through the Apps Script (version 3): name, time, note and ingredient lines. */
     recipe: async (url: string) =>
       (await call<{ recipe: { name: string; time: string; note: string; url: string; ingredients: string[] } }>('recipe', { url })).recipe,
+    /** Driving time from home to a place, leaving at departAt (Apps Script version 4, Google Maps). */
+    travel: async (origin: string, destination: string, departAt: number) =>
+      (await call<{ travel: { minutes: number; traffic: boolean; distance: string; to: string } }>('travel', { origin, destination, departAt })).travel,
     remove: async (original: CalEvent) => {
       if (!original.eventId) throw new BridgeError('outdated');
       await call('delete', { calendarId: original.calendarId, eventId: original.eventId, occurrence: occurrenceOf(original) });

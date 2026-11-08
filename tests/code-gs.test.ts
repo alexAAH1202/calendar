@@ -9,6 +9,8 @@ const code = readFileSync('apps-script/Code.gs', 'utf8');
 interface FakeEvent { id?: string; title: string; start: Date; end: Date; allDay?: boolean; creators?: string[]; location?: string; recurring?: boolean }
 
 const fetched: string[] = [];
+const directions: Record<string, unknown>[] = [];
+let cacheStore: Record<string, string> = {};
 const pages: Record<string, string> = {
   'https://www.recipetineats.com/honey-garlic-chicken/':
     '<html><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage"},' +
@@ -81,11 +83,32 @@ function load(props: Record<string, string> = { BRIDGE_KEY: KEY }) {
     },
     Utilities: {
       getUuid: () => '0123456789abcdef0123456789abcdef',
+      base64EncodeWebSafe: (t: string) => Buffer.from(t).toString('base64url'),
       // Sydney is UTC+11 in summer: enough for these tests.
       formatDate: (d: Date, _tz: string, _f: string) => new Date(d.getTime() + 11 * 3600000).toISOString().slice(0, 10),
       parseDate: (s: string) => new Date(new Date(`${s}T00:00:00Z`).getTime() - 11 * 3600000),
     },
     Logger: { log: () => {} },
+    CacheService: { getScriptCache: () => ({ get: (k: string) => cacheStore[k] ?? null, put: (k: string, v: string) => { cacheStore[k] = v; } }) },
+    Maps: {
+      DirectionFinder: { Mode: { DRIVING: 'driving' } },
+      newDirectionFinder: () => {
+        const q: Record<string, unknown> = {};
+        const f = {
+          setOrigin: (o: string) => ((q.o = o), f),
+          setDestination: (d: string) => ((q.d = d), f),
+          setMode: (m: string) => ((q.m = m), f),
+          setDepart: (t: Date) => ((q.t = t), f),
+          getDirections: () => {
+            directions.push(q);
+            if (q.d === 'Nowhere') return { routes: [] };
+            return { routes: [{ legs: [{ duration: { value: 1500 }, duration_in_traffic: q.d === 'Melton' ? { value: 1620 } : undefined,
+              distance: { text: '24.1 km' }, end_address: `${q.d} VIC 3337, Australia` }] }] };
+          },
+        };
+        return f;
+      },
+    },
     UrlFetchApp: {
       fetch: (url: string) => {
         fetched.push(url);
@@ -165,7 +188,27 @@ describe('Code.gs bridge', () => {
   const FAM = 'family@group.calendar.google.com';
 
   it('reports its version, so the wall can tell an out-of-date script', () => {
-    expect(b.post({ action: 'version', key: KEY })).toEqual({ ok: true, version: 3 });
+    expect(b.post({ action: 'version', key: KEY })).toEqual({ ok: true, version: 4 });
+  });
+
+  it('asks Maps for the driving time, with traffic when Maps has it, and keeps the answer for a while', () => {
+    cacheStore = {};
+    directions.length = 0;
+    const departAt = Date.now() + 3600_000;
+    const t = b.post({ action: 'travel', key: KEY, origin: '1 Home St, Caroline Springs', destination: 'Melton', departAt });
+    expect(t).toEqual({ ok: true, travel: { minutes: 27, traffic: true, distance: '24.1 km', to: 'Melton VIC 3337, Australia' } });
+    expect(directions[0]).toMatchObject({ o: '1 Home St, Caroline Springs', d: 'Melton', m: 'driving' });
+    expect((directions[0].t as Date).getTime()).toBe(departAt);
+    b.post({ action: 'travel', key: KEY, origin: '1 Home St, Caroline Springs', destination: 'Melton', departAt: departAt + 60_000 });
+    expect(directions).toHaveLength(1); // same quarter hour: answered from the cache
+    expect(b.post({ action: 'travel', key: KEY, origin: 'Home', destination: 'Footscray', departAt }).travel).toMatchObject({ minutes: 25, traffic: false });
+  });
+
+  it('refuses a missing place, an unroutable place and no key; never asks for a time in the past', () => {
+    expect(b.post({ action: 'travel', key: KEY, origin: '', destination: 'Melton' }).error).toBe('place_missing');
+    expect(b.post({ action: 'travel', key: KEY, origin: 'Home', destination: 'Nowhere', departAt: 1 }).error).toBe('no_route');
+    expect((directions.at(-1)!.t as Date).getTime()).toBeGreaterThan(Date.now());
+    expect(b.post({ action: 'travel', origin: 'Home', destination: 'Melton' }).error).toBe('unauthorised');
   });
 
   it('reads a recipe page’s schema.org Recipe (inside @graph or an array, any @type list)', () => {

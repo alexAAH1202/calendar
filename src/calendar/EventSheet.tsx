@@ -19,7 +19,7 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
   const [f, setF] = useState<EventFields>(() =>
     original ? fieldsOf(original) : blankFields(writable.find((c) => c.shared)?.googleId ?? writable[0]?.googleId ?? '', target.kind === 'new' ? target.day : ''),
   );
-  const [travel, setTravelMin] = useState<number>(original ? cal.travel[extrasKey(original)] ?? 0 : 0);
+  const [travel, setTravelMin] = useState<number | null>(original ? cal.travel[extrasKey(original)] ?? null : null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -126,12 +126,14 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
 }
 
 /** Travel time is kept in the family's own data, not in Google, so it works on any event. */
-function TravelField({ value, onChange, note }: { value: number; onChange: (m: number) => void; note?: string }) {
+function TravelField({ value, onChange, note }: { value: number | null; onChange: (m: number | null) => void; note?: string }) {
   return (
     <label className="inline-field">
       Travel time (the wall says when to leave)
-      <select id="ev-travel" value={String(value)} onChange={(e) => onChange(Number(e.target.value))}>
-        {[0, 5, 10, 15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m ? `${m} min` : 'None'}</option>)}
+      <select id="ev-travel" value={value === null ? 'auto' : String(value)} onChange={(e) => onChange(e.target.value === 'auto' ? null : Number(e.target.value))}>
+        <option value="auto">Automatic (Google Maps, from home to this place)</option>
+        <option value="0">No travel</option>
+        {[5, 10, 15, 20, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m} min (set by hand)</option>)}
       </select>
       {note && <span className="step-meta">{note}</span>}
     </label>

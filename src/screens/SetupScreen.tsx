@@ -9,6 +9,7 @@ import { useStore } from '../data/StoreContext';
 import { routineId } from '../data/timeOfDay';
 import { TIMES_OF_DAY, type Person } from '../data/types';
 import { WallSetup } from '../wall/WallSetup';
+import { TravelSetup } from '../now/TravelSetup';
 
 type Section = 'children' | 'calendar' | 'wall' | 'family';
 
@@ -65,7 +66,10 @@ export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld 
       </div>
 
       {section === 'calendar' ? (
-        <CalendarSetup />
+        <>
+          <CalendarSetup />
+          <TravelSetup />
+        </>
       ) : section === 'wall' ? (
         <WallSetup wakeLockHeld={wakeLockHeld} />
       ) : section === 'family' ? (

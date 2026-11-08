@@ -42,6 +42,19 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Leave-by times from Google Maps, and school mornings
+
+- **Google Maps:** Parent → Calendar → *Leave-by times from Google Maps*: home address, buffer (default 5 min),
+  on/off, and a Test. For the next event with a place, the Apps Script (version 4, Apps Script's built-in Maps
+  service: no API key, no billing) gives the driving time from home, with Maps' traffic forecast for the time you
+  would leave. Up next then says "27 min drive (traffic) + 5 min buffer · leave 9:28". Asked first within 6 hours of
+  the event, then hourly, then every 15 minutes in the last 90 minutes; answers are kept on the device, and the script
+  keeps each answer for 10 minutes. An event's travel can be "Automatic (Google Maps)" (the default), "No travel", or a
+  time set by hand, which always wins. Needs a precise place on the event.
+- **School mornings:** Parent → Wall → *School mornings*: Monday to Friday each child's morning list counts down to
+  leaving for school ("Leave for school at 8:10 · 14 min left · 3 steps to go"); set to 8:10, with a "School holidays
+  until" date to pause it. A finish time set on a list in Routines wins.
+
 ## Meals (from the family's meal_planner.html)
 
 A 🍽 Meals tab with the family's own planner, now shared by every device (Firestore `meals/recipes`,

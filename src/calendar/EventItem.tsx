@@ -17,7 +17,7 @@ export function EventItem({ event, day, compact = false, onEdit }: {
   const cal = useCalendarData();
   const c = cal.calendarFor(event);
   const by = cal.addedBy(event);
-  const travel = event.allDay ? 0 : cal.travel[extrasKey(event)] ?? 0;
+  const travel = event.allDay ? 0 : Math.max(0, cal.travel[extrasKey(event)] ?? 0);
   const leave = travel ? ` · leave ${format(event.start! - travel * 60_000, 'h:mm a').toLowerCase()}` : '';
   return (
     <li className={`event ${compact ? 'event--compact' : ''} ${onEdit ? 'event--editable' : ''}`} style={{ '--cal': c?.colour ?? '#9aa7b1' } as CSSProperties}>

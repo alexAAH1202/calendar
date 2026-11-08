@@ -53,7 +53,7 @@ export function useCalendar(store: FamilyStore) {
   useEffect(
     () =>
       store.watchCollection<{ travelMinutes?: number }>(['eventExtras'], (docs) =>
-        setTravel(Object.fromEntries(docs.filter((d) => d.travelMinutes).map((d) => [d.id, d.travelMinutes!]))),
+        setTravel(Object.fromEntries(docs.filter((d) => d.travelMinutes !== undefined).map((d) => [d.id, d.travelMinutes!]))),
       ),
     [store],
   );
@@ -157,10 +157,11 @@ export function useCalendar(store: FamilyStore) {
   );
 
   return {
-    /** Travel minutes kept for events (our own data, not Google's), by extrasKey. */
+    /** Travel minutes set by hand for events (our own data, not Google's), by extrasKey; 0 means no travel. */
     travel,
-    setTravel: (e: CalEvent, minutes: number) =>
-      minutes ? void store.putDoc(['eventExtras', extrasKey(e)], { travelMinutes: minutes }) : void store.removeDoc(['eventExtras', extrasKey(e)]),
+    /** A number sets the travel time by hand (0: no travel); null goes back to automatic (Google Maps). */
+    setTravel: (e: CalEvent, minutes: number | null) =>
+      minutes === null ? void store.removeDoc(['eventExtras', extrasKey(e)]) : void store.putDoc(['eventExtras', extrasKey(e)], { travelMinutes: minutes }),
     settings,
     /** False until it is known whether a calendar is set up, so the wall never redraws its layout on load. */
     known,

@@ -18,6 +18,8 @@ import { useReward } from '../lists/useReward';
 import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
 import { FinishBy } from '../now/FinishBy';
+import { DEFAULT_SCHOOL, schoolLeaveAt, type SchoolSettings } from '../now/school';
+import { useSettingsDoc } from '../now/useSettingsDoc';
 
 /** The routine a person has for a time of day before anything is saved. */
 export function seedFor(personId: string, tod: TimeOfDay): Routine {
@@ -35,6 +37,7 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   const { reward } = useReward(store, person.id);
   const palette = PALETTES[profile.palette];
   const mode = useMode();
+  const school = useSettingsDoc<SchoolSettings>(store, 'school', DEFAULT_SCHOOL).value;
   const routine = set.routines[seed.id];
   // On a low-energy or running-late day only the essential steps show, and those count as the whole list.
   const steps = forMode(routine?.steps ?? [], mode);
@@ -90,9 +93,12 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
           <span className="progress-bar" aria-hidden="true"><span style={{ width: `${(doneCount / steps.length) * 100}%` }} /></span>
         </div>
       )}
-      {routine?.finishBy && set.loaded && dayLoaded && (
-        <FinishBy finishBy={routine.finishBy} now={now} stepsLeft={steps.length - doneCount} />
-      )}
+      {set.loaded && dayLoaded && (() => {
+        // The list's own finish time wins; otherwise, on school mornings, the time to leave for school.
+        if (routine?.finishBy) return <FinishBy finishBy={routine.finishBy} now={now} stepsLeft={steps.length - doneCount} />;
+        const leave = tod === 'morning' ? schoolLeaveAt(now, school) : undefined;
+        return leave ? <FinishBy finishBy={leave} now={now} stepsLeft={steps.length - doneCount} label="Leave for school at" /> : null;
+      })()}
       {cheer && (
         <div key={cheer.key} className="cheer" role="status">
           <span className="cheer-text">{cheer.text}</span>
