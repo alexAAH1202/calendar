@@ -12,6 +12,7 @@ import { useRoutineSet } from '../data/useRoutineSet';
 import { ChildStep } from './ChildStep';
 import { playAllDoneCue, playSoftCue } from './softCue';
 import { Avatar } from './Avatar';
+import { ScrollList } from './ScrollList';
 import { FirstThen } from './FirstThen';
 import { RewardBar } from './RewardBar';
 import { forMode } from '../now/dayMode';
@@ -85,13 +86,15 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
         <h2>{person.name}</h2>
         <span className="child-tod">{TIME_LABELS[tod]}</span>
       </header>
-      <RewardBar personId={person.id} />
-      {steps.length > 0 && set.loaded && dayLoaded && (
-        <div className="progress" aria-label={progressText(doneCount, steps.length)}>
-          <span className="progress-text">{progressText(doneCount, steps.length)}</span>
-          <span className="progress-bar" aria-hidden="true"><span style={{ width: `${(doneCount / steps.length) * 100}%` }} /></span>
-        </div>
-      )}
+      <div className="column-stats">
+        <RewardBar personId={person.id} />
+        {steps.length > 0 && set.loaded && dayLoaded && (
+          <div className="progress" aria-label={progressText(doneCount, steps.length)}>
+            <span className="progress-text">{progressText(doneCount, steps.length)}</span>
+            <span className="progress-bar" aria-hidden="true"><span style={{ width: `${(doneCount / steps.length) * 100}%` }} /></span>
+          </div>
+        )}
+      </div>
       {set.loaded && dayLoaded && (() => {
         // The list's own finish time wins; otherwise, on school mornings, the time to leave for school.
         if (routine?.finishBy) return <FinishBy finishBy={routine.finishBy} now={now} stepsLeft={steps.length - doneCount} />;
@@ -114,13 +117,13 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
           {profile.layout === 'firstThen' ? (
             <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode} />
           ) : (
-            <ol className="steps">
+            <ScrollList>
               {visible.map((step) => (
                 <ChildStep key={step.id} step={step} done={done.has(step.id)} symbolMode={profile.symbolMode}
                   onSetDone={(d) => tick(step.id, d)}
                   justTicked={cheer?.stepId === step.id} />
               ))}
-            </ol>
+            </ScrollList>
           )}
           {allDone && (
             <p className="all-done">

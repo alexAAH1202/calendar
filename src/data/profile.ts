@@ -16,8 +16,8 @@ export function profileOf(person: Person): SensoryProfile {
   return { ...DEFAULT_PROFILE, ...person.sensory };
 }
 
-/** Child text sizes in CSS px; the smallest meets the spec's 24 sp minimum. */
-export const TEXT_SIZES: Record<TextSize, number> = { normal: 28, large: 34, larger: 40, largest: 48 };
+/** Child text sizes in CSS px; the smallest is the spec's 24 sp minimum. */
+export const TEXT_SIZES: Record<TextSize, number> = { normal: 24, large: 28, larger: 34, largest: 40 };
 
 export interface Palette {
   label: string;

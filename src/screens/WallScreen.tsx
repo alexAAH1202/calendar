@@ -99,7 +99,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const childView = view === 'today' || view === 'agenda';
   return (
     <DayModeContext.Provider value={dayMode.mode}>
-    <main className={`screen ${childView ? 'screen--child' : ''} screen--wide`}>
+    <main className={`screen ${childView ? 'screen--child' : ''} screen--wide ${view === 'today' ? 'screen--fit' : ''}`}>
       <header className="screen-header">
         {dateLine}
         <Tabs<View> label="View" value={view} onChange={setView} withIcons

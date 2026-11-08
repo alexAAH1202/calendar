@@ -1057,3 +1057,53 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
   .screen-header { flex-wrap: wrap; }
   .screen-header .tabs--icons { order: 3; flex-basis: 100%; }
 }
+
+/* Today on the wall fits the screen exactly: each child's list scrolls inside its own column. */
+.screen--fit { height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 16px; }
+.screen--fit > .screen-header, .screen--fit > .mode-banner, .screen--fit > .today-strip, .screen--fit > .dinner-tonight { flex: none; }
+.screen--fit > .today-layout, .screen--fit > .child-board { flex: 1 1 auto; min-height: 0; }
+.screen--fit .today-layout { align-items: stretch; }
+.screen--fit .today-layout > .child-board { height: 100%; min-height: 0; align-items: stretch; }
+.screen--fit .today-panel { overflow-y: auto; min-height: 0; }
+.screen--fit .child-column { height: 100%; min-height: 0; }
+.screen--fit .child-column > * { flex: none; }
+.screen--fit .child-column > .scroll-list, .screen--fit .child-column > .first-then { flex: 1 1 auto; min-height: 0; }
+.scroll-list { position: relative; display: flex; flex-direction: column; min-height: 0; }
+.screen--fit .scroll-list-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 4px; }
+.scroll-more {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--muted);
+  pointer-events: none;
+}
+.screen:not(.screen--fit) .scroll-more { display: none; }
+
+/* Shorter cards for long lists; the whole card stays the tap target. */
+.child-column .step { min-height: 64px; }
+.child-column .step-main { min-height: 64px; padding: 8px 16px; gap: 14px; }
+.child-column .step-image { font-size: 34px; width: 42px; }
+.child-column .tick { width: 40px; height: 40px; border-radius: 12px; font-size: 26px; }
+.child-column .steps { gap: 8px; }
+.child-header h2 { font-size: 30px; }
+/* Stars and progress side by side, to leave more room for the list. */
+.column-stats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: end; }
+.column-stats .reward, .column-stats .progress { padding-bottom: 0; }
+.column-stats .progress { flex-direction: column; align-items: stretch; gap: 6px; }
+.column-stats .reward-text, .column-stats .progress-text { font-size: 18px; }
+.child-column .step { min-height: 58px; }
+.child-column .step-main { min-height: 58px; padding: 6px 14px; }
+.child-column .steps { gap: 6px; }
+.child-header .avatar { width: 48px !important; height: 48px !important; }
+.child-header h2 { font-size: 28px; }
+.screen--fit .child-column { gap: 8px; padding-top: 0; }
+.column-stats { align-items: start; }
+.column-stats .progress-bar, .column-stats .reward-bar { flex: none; height: 12px; }
+.column-stats .reward { gap: 6px; }
