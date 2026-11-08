@@ -30,8 +30,3 @@ export function shouldReload(c: ReloadCheck): boolean {
   return h >= 3 && h < 5 && c.lastReloadDay !== c.today && c.idleMs >= 5 * 60_000 && !c.pendingWrites;
 }
 
-/** "4:05", "0:59", "12:00" for a timer. */
-export function clockText(seconds: number): string {
-  const s = Math.max(0, Math.ceil(seconds));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}

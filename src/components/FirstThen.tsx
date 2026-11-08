@@ -7,12 +7,11 @@ interface Props {
   done: Set<string>;
   onSetDone: (id: string, done: boolean) => void;
   symbolMode: SymbolMode;
-  sound: boolean;
   rewardLabel: string;
 }
 
 /** One step at a time: "First" the next step to do (tickable, big), "Then" the one after, or the reward. */
-export function FirstThen({ steps, done, onSetDone, symbolMode, sound, rewardLabel }: Props) {
+export function FirstThen({ steps, done, onSetDone, symbolMode, rewardLabel }: Props) {
   const open = steps.filter((s) => !done.has(s.id));
   const [first, then] = open;
   if (!first) return null;
@@ -21,7 +20,7 @@ export function FirstThen({ steps, done, onSetDone, symbolMode, sound, rewardLab
       <div className="ft-part">
         <span className="ft-label">First</span>
         <ol className="steps">
-          <ChildStep step={first} done={false} symbolMode={symbolMode} big timerSeconds={first.timerSeconds} sound={sound}
+          <ChildStep step={first} done={false} symbolMode={symbolMode} big
             onSetDone={(d) => onSetDone(first.id, d)} />
         </ol>
       </div>

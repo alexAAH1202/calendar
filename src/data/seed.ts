@@ -11,9 +11,9 @@ export const SEED_ROUTINE: Routine = {
   steps: [
     { id: 's1', title: 'Wake up', image: 'emoji:🌅', stars: 1 },
     { id: 's2', title: 'Go to the toilet', image: 'emoji:🚽', stars: 1 },
-    { id: 's3', title: 'Get dressed', image: 'emoji:👕', timerSeconds: 300, stars: 1 },
+    { id: 's3', title: 'Get dressed', image: 'emoji:👕', stars: 1 },
     { id: 's4', title: 'Eat breakfast', image: 'emoji:🥣', stars: 1 },
-    { id: 's5', title: 'Brush teeth', image: 'emoji:🪥', timerSeconds: 120, stars: 1 },
+    { id: 's5', title: 'Brush teeth', image: 'emoji:🪥', stars: 1 },
     { id: 's6', title: 'Brush hair', image: 'emoji:💇', stars: 1 },
     { id: 's7', title: 'Shoes on', image: 'emoji:👟', stars: 1 },
     { id: 's8', title: 'Pack school bag', image: 'emoji:🎒', stars: 1 },

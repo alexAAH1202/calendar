@@ -4,7 +4,6 @@ export interface Step {
   title: string;
   /** "emoji:👕"; a symbol-library id or small data URL may follow later. */
   image?: string;
-  timerSeconds?: number;
   stars: number;
   /** Still shown on a low-energy or running-late day. */
   essential?: boolean;

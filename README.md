@@ -104,9 +104,7 @@ between children; Undo reverses it (the Routines tab now loads every child's lis
 
 ## Phase 6: what is built
 
-- **Timers:** a step can have a 1–15 minute timer (⋯ on the step in Routines). On the wall the child taps ▶; a
-  shrinking ring and digits count down; tap to pause or carry on. Silent unless the child's sound is on; at zero
-  it just says "Time’s up" (no flashing, no animation).
+- **Timers:** removed at the family's request (steps no longer show a ▶ timer).
 - **First – Then:** per child (Parent → Children → Show the routine as). The next step is a big tickable card,
   the one after it is shown beside it; after the last step, "Then" shows the reward.
 - **Stars and rewards** (`rewards/{childId}`): each step earns 0–3 stars (default 1) the first time it is ticked

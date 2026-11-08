@@ -789,35 +789,12 @@ h1 { font-weight: 800; letter-spacing: -0.01em; }
   .edit-surface { padding: 12px 10px 20px; }
 }
 
-/* Phase 6: stars, timers, First–Then, sleep */
+/* Phase 6: stars, First–Then, sleep */
 .reward { display: flex; flex-direction: column; gap: 6px; padding: 0 4px 6px; }
 .reward-text { font-size: 20px; font-weight: 700; color: var(--text); }
 .reward-bar { display: block; height: 12px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, #fff); overflow: hidden; }
 .reward-bar span { display: block; height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--accent) 80%, #000); }
 
-.timer {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: var(--touch);
-  min-width: 104px;
-  margin-right: 14px;
-  padding: 4px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--text);
-  font: inherit;
-  font-size: 22px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  touch-action: manipulation;
-}
-.timer-ring { width: 44px; height: 44px; }
-.timer-track { fill: none; stroke: color-mix(in srgb, var(--accent) 20%, #fff); stroke-width: 6; }
-.timer-left { fill: none; stroke: color-mix(in srgb, var(--accent) 75%, #000); stroke-width: 6; stroke-linecap: round; }
-.timer-done { color: var(--muted); }
 
 .first-then { display: grid; grid-template-columns: minmax(0, 3fr) auto minmax(0, 2fr); align-items: center; gap: 16px; }
 .ft-part { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

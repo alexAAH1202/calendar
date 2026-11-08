@@ -112,7 +112,7 @@ describe('useRoutineSet', () => {
     const copy = result.current.routines[B.id].steps;
     expect(copy.map((s) => s.title)).toEqual(M.steps.map((s) => s.title));
     expect(copy.some((s) => M.steps.some((m) => m.id === s.id))).toBe(false);
-    expect(copy[2]).toMatchObject({ timerSeconds: 300, image: 'emoji:👕' });
+    expect(copy[2]).toMatchObject({ image: 'emoji:👕' });
     act(() => result.current.undo());
     expect(result.current.routines[B.id].steps).toEqual([]);
     expect(ids(result)).toBe('s1,s2,s3,s4,s5,s6,s7,s8');

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_REWARD, rewardProgress, starChange } from '../lists/stars';
-import { clockText, inSleepWindow, shouldReload } from './schedule';
+import { inSleepWindow, shouldReload } from './schedule';
 
 const at = (h: number, m = 0) => new Date(2026, 10, 9, h, m);
 
@@ -31,15 +31,6 @@ describe('nightly reload', () => {
   });
 });
 
-describe('timer text', () => {
-  it('minutes and seconds, rounding up so 0:00 means done', () => {
-    expect(clockText(300)).toBe('5:00');
-    expect(clockText(59.2)).toBe('1:00');
-    expect(clockText(0.4)).toBe('0:01');
-    expect(clockText(0)).toBe('0:00');
-    expect(clockText(-3)).toBe('0:00');
-  });
-});
 
 describe('stars', () => {
   it('earned once on the first tick, taken back on an untick, not doubled', () => {

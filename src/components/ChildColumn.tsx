@@ -107,13 +107,13 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
       ) : (
         <>
           {profile.layout === 'firstThen' ? (
-            <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode} sound={profile.sound}
+            <FirstThen steps={steps} done={done} onSetDone={tick} symbolMode={profile.symbolMode}
               rewardLabel={reward.label} />
           ) : (
             <ol className="steps">
               {visible.map((step) => (
                 <ChildStep key={step.id} step={step} done={done.has(step.id)} symbolMode={profile.symbolMode}
-                  timerSeconds={step.timerSeconds} sound={profile.sound} onSetDone={(d) => tick(step.id, d)}
+                  onSetDone={(d) => tick(step.id, d)}
                   justTicked={cheer?.stepId === step.id} />
               ))}
             </ol>
