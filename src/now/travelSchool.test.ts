@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CalEvent } from '../calendar/types';
-import { DEFAULT_SCHOOL, schoolLeaveAt } from './school';
+import { DEFAULT_SCHOOL, schoolDoneMessage, schoolLeaveAt } from './school';
 import { DEFAULT_TRAVEL, departGuess, occurrenceKey, shouldAsk, travelFor } from './travel';
 import { extrasKey } from './upNext';
 
@@ -60,5 +60,16 @@ describe('school mornings', () => {
     expect(schoolLeaveAt(new Date(2026, 10, 10, 7), hols)).toBeUndefined();
     expect(schoolLeaveAt(new Date(2026, 10, 11, 7), hols)).toBe('08:10');
     expect(schoolLeaveAt(new Date(2026, 10, 9, 7), { ...DEFAULT_SCHOOL, on: false })).toBeUndefined();
+  });
+});
+
+describe('the school-morning finishing message', () => {
+  it('weekday mornings only, not weekends, other times, holidays, or when cleared', () => {
+    const msg = 'You can use your iPad in the car – congratulations!';
+    expect(schoolDoneMessage(new Date(2026, 10, 9, 7, 50), 'morning', DEFAULT_SCHOOL)).toBe(msg);
+    expect(schoolDoneMessage(new Date(2026, 10, 7, 9), 'morning', DEFAULT_SCHOOL)).toBeUndefined(); // Saturday
+    expect(schoolDoneMessage(new Date(2026, 10, 9, 15), 'afternoon', DEFAULT_SCHOOL)).toBeUndefined();
+    expect(schoolDoneMessage(new Date(2026, 10, 9, 7), 'morning', { ...DEFAULT_SCHOOL, holidaysUntil: '2026-11-20' })).toBeUndefined();
+    expect(schoolDoneMessage(new Date(2026, 10, 9, 7), 'morning', { ...DEFAULT_SCHOOL, doneMessage: ' ' })).toBeUndefined();
   });
 });

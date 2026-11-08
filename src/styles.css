@@ -1144,3 +1144,7 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 .today-strip { align-items: stretch; margin-bottom: 8px; }
 .today-strip > .up-next, .today-strip > .dinner-tonight { margin-bottom: 0; }
 .today-strip > .dinner-tonight { padding-top: 4px; padding-bottom: 4px; }
+/* A longer finishing message wraps inside the column instead of running off it. */
+.cheer { white-space: normal; max-width: 92%; text-align: center; justify-content: center; flex-wrap: wrap; }
+.all-done { overflow-wrap: break-word; }
+.event-when .inline-field:has(#school-done) { flex: 1 1 380px; }

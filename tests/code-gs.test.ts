@@ -194,7 +194,8 @@ describe('Code.gs bridge', () => {
   it('asks Maps for the driving time, with traffic when Maps has it, and keeps the answer for a while', () => {
     cacheStore = {};
     directions.length = 0;
-    const departAt = Date.now() + 3600_000;
+    // Inside one quarter hour, so the two asks share the script's cached answer whatever the time now.
+    const departAt = Math.ceil((Date.now() + 3600_000) / 900_000) * 900_000 + 60_000;
     const t = b.post({ action: 'travel', key: KEY, origin: '1 Home St, Caroline Springs', destination: 'Melton', departAt });
     expect(t).toEqual({ ok: true, travel: { minutes: 27, traffic: true, distance: '24.1 km', to: 'Melton VIC 3337, Australia' } });
     expect(directions[0]).toMatchObject({ o: '1 Home St, Caroline Springs', d: 'Melton', m: 'driving' });

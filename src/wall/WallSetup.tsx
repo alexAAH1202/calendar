@@ -25,6 +25,11 @@ export function WallSetup({ wakeLockHeld }: { wakeLockHeld?: boolean }) {
         <label className="inline-field">Leave for school at
           <input id="school-leave" type="time" value={school.value.leaveAt} onChange={(e) => e.target.value && school.change({ leaveAt: e.target.value })} />
         </label>
+        <label className="inline-field">When the morning list is done
+          <input id="school-done" defaultValue={school.value.doneMessage ?? ''} key={school.value.doneMessage ?? ''}
+            onBlur={(e) => e.target.value.trim() !== (school.value.doneMessage ?? '') && school.change({ doneMessage: e.target.value.trim() })}
+            placeholder="All done!" />
+        </label>
         <label className="inline-field">School holidays until (no countdown)
           <input id="school-holidays" type="date" value={school.value.holidaysUntil ?? ''} onChange={(e) => school.change({ holidaysUntil: e.target.value || null })} />
         </label>

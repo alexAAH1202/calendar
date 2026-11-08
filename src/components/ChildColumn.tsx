@@ -18,7 +18,7 @@ import { RewardBar } from './RewardBar';
 import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
 import { FinishBy } from '../now/FinishBy';
-import { DEFAULT_SCHOOL, schoolLeaveAt, type SchoolSettings } from '../now/school';
+import { DEFAULT_SCHOOL, schoolDoneMessage, schoolLeaveAt, type SchoolSettings } from '../now/school';
 import { useSettingsDoc } from '../now/useSettingsDoc';
 
 /** The routine a person has for a time of day before anything is saved. */
@@ -37,6 +37,8 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   const palette = PALETTES[profile.palette];
   const mode = useMode();
   const school = useSettingsDoc<SchoolSettings>(store, 'school', DEFAULT_SCHOOL).value;
+  // School mornings: finishing the list earns the family's message (e.g. the iPad in the car).
+  const doneMessage = schoolDoneMessage(now, tod, school);
   const routine = set.routines[seed.id];
   // On a low-energy or running-late day only the essential steps show, and those count as the whole list.
   const steps = forMode(routine?.steps ?? [], mode);
@@ -74,7 +76,7 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
     if (!isDone || profile.celebration === 'off') return;
     // A small win on every tick; the whole list finished gets a bigger one.
     const n = cheers.current++;
-    setCheer({ key: n, text: finishes ? `All done, ${person.name}!` : cheerFor(n), stars, stepId });
+    setCheer({ key: n, text: finishes ? doneMessage ?? `All done, ${person.name}!` : cheerFor(n), stars, stepId });
     if (finishes && profile.celebration === 'big') setConfetti(true);
   };
 
@@ -127,7 +129,9 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
           )}
           {allDone && (
             <p className="all-done">
-              {profile.celebration === 'off' ? <><span aria-hidden="true">✓</span> All done</> : <>🎉 All done, {person.name}!</>}
+              {profile.celebration === 'off'
+                ? <><span aria-hidden="true">✓</span> {doneMessage ?? 'All done'}</>
+                : <>🎉 {doneMessage ?? `All done, ${person.name}!`}</>}
             </p>
           )}
         </>
