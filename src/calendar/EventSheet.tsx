@@ -6,6 +6,7 @@ import { timeLabel } from './dates';
 import { blankFields, fieldsOf, toNewEvent, type EventFields } from './eventForm';
 import type { CalEvent } from './types';
 import { extrasKey } from '../now/upNext';
+import { WhoChips } from './WhoChips';
 
 export type SheetTarget = { kind: 'new'; day: string } | { kind: 'edit'; event: CalEvent };
 
@@ -20,6 +21,13 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
     original ? fieldsOf(original) : blankFields(writable.find((c) => c.shared)?.googleId ?? writable[0]?.googleId ?? '', target.kind === 'new' ? target.day : ''),
   );
   const [travel, setTravelMin] = useState<number | null>(original ? cal.travel[extrasKey(original)] ?? null : null);
+  // Who it is for: until the sheet's own choice is made, the event follows its calendar's default.
+  const [chosenWho, setChosenWho] = useState<string[] | null>(null);
+  const defaultWho = (calendarId: string) => {
+    const ids = cal.calendars.find((c) => c.googleId === calendarId)?.defaultWho ?? [];
+    return ids.filter((id) => cal.lanePeople.some((p) => p.id === id));
+  };
+  const shownWho = chosenWho ?? (original ? cal.whoFor(original) : defaultWho(f.calendarId));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -51,6 +59,9 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
     void run(async () => {
       const saved = original ? await cal.update(original, ev) : await cal.create(ev);
       if (!f.allDay) cal.setTravel(saved, travel);
+      // Kept for the event itself (and carried over if it moved to another calendar and got a new id).
+      const moved = !!original && original.eventId !== saved.eventId;
+      if (chosenWho !== null || (moved && original && cal.hasOwnWho(original))) cal.setWho(saved, shownWho);
     });
   };
 
@@ -68,6 +79,7 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
               {timeLabel(original, original.allDay ? original.startDate! : new Date(original.start!).toISOString().slice(0, 10))}
               {ownCal ? ` · ${ownCal.label}` : ''}{original.location ? ` · ${original.location}` : ''}
             </p>
+            <WhoChips people={cal.lanePeople} value={shownWho} onChange={(ids) => cal.setWho(original, ids)} />
             {!original.allDay && (
               <TravelField value={travel} onChange={(m) => { setTravelMin(m); cal.setTravel(original, m); }}
                 note={original.recurring ? 'Kept for every time this event repeats.' : undefined} />
@@ -106,6 +118,7 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
             </div>
             <label htmlFor="ev-where">Where (optional)</label>
             <input id="ev-where" value={f.location} onChange={(e) => set('location', e.target.value)} />
+            <WhoChips people={cal.lanePeople} value={shownWho} onChange={setChosenWho} />
             {!f.allDay && <TravelField value={travel} onChange={setTravelMin} />}
             <div className="sheet-actions">
               <button type="submit" className="btn btn--primary" disabled={busy || !f.title.trim()}>

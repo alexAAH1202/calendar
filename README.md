@@ -42,6 +42,22 @@ to the `<projectId>.web.app` and `<projectId>.firebaseapp.com` websites.
 
 To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>:5173` in Chrome on the tablet.
 
+## Calendar as a family timeline
+
+- The **Calendar** tab (it replaces the old Week tab; **Week** is a switch inside it) shows today and tomorrow
+  as timelines: a row for each person (adults first, then children) plus an Everyone row, events as bars across the
+  day (overlaps stack), all-day events as chips along the top, a legend of the calendars' colours, a red line for now,
+  and ‹ Today › to move a day at a time. The date at the top now shows the time too.
+- **Who is it for?** On any event (tap it): Everyone, or any of Alex, Andrew, Astrid, Ethan. Kept in the family's own
+  data (`eventExtras`), not in Google, so it works whoever added the event, on read-only calendars, and on repeating
+  events (one choice covers the whole series). It follows an event if it is moved to another calendar. An event for
+  several people shows in each of their rows.
+- **Whose calendar is this?** Parent → Calendar: each connected calendar can have default people, so Andrew's own
+  calendar fills his row without marking every event. A choice made on an event wins.
+- **Adults** (Parent → People): add adults (name, colour, symbol) so they get a row without needing an account.
+- Who-badges also show on the Today tab's events, the phone's Day list and the Week view (names in words too).
+- Not copied from the photo: the joke and fun-fact tiles at the bottom.
+
 ## Routines tab for the children; editing under Parent
 
 - The main screen's **Routines** tab is now for the children: each child's list for Morning, Afternoon or Evening

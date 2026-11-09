@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useCalendarData } from '../calendar/CalendarContext';
 import { CalendarView } from '../calendar/CalendarView';
+import { LanesView } from '../calendar/LanesView';
 import { TodayPanel } from '../calendar/TodayPanel';
 import { ChildBoard } from '../components/ChildBoard';
 import { HoldButton } from '../components/HoldButton';
@@ -53,7 +54,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const now = useNow();
   const day = dayKey(now);
   const tod = timeOfDayAt(now);
-  const { children, loaded } = usePeople(store);
+  const { children, adults, loaded } = usePeople(store);
   const [setup, setSetup] = useState(false);
   // Phones open on the family's Day list; the wall on Today. A home-screen shortcut can open another tab
   // (?view=braindump&capture=1 opens the brain dump ready to type).
@@ -88,7 +89,12 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   useIdleExit(!setup && panelDay !== null, clearPanelDay, 5 * 60_000);
   useIdleExit(!setup && who !== 'all', showAll, 5 * 60_000);
 
-  const dateLine = <h1>{format(now, 'EEEE d MMMM')}</h1>;
+  const dateLine = (
+    <h1>
+      {format(now, 'EEEE d MMMM')}
+      <span className="header-time">{' · '}{format(now, 'h:mm a').toLowerCase()}</span>
+    </h1>
+  );
 
   if (!loaded || !calendar.known) return <main className="screen screen--child"><p className="hint">Loading…</p></main>;
 
@@ -96,7 +102,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
 
   if (setup) {
     return (
-      <SetupScreen people={children} familyPanel={parentTools} onExit={exitSetup} header={dateLine} currentTod={tod}
+      <SetupScreen people={children} adults={adults} familyPanel={parentTools} onExit={exitSetup} header={dateLine} currentTod={tod}
         wakeLockHeld={isPhone ? undefined : wakeLockHeld} />
     );
   }
@@ -116,7 +122,7 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'chores', label: 'Chores', icon: '🧹' },
             { value: 'braindump', label: 'Brain dump', icon: '💭' },
             { value: 'meals', label: 'Meals', icon: '🍽' },
-            { value: 'week', label: 'Week', icon: '🗓️' },
+            { value: 'week', label: 'Calendar', icon: '🗓️' },
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
         <div className="header-controls">
@@ -149,7 +155,9 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
         </section>
       ) : view === 'meals' ? (
         <MealsView now={now} />
-      ) : view === 'week' || view === 'month' ? (
+      ) : view === 'week' ? (
+        <LanesView now={now} />
+      ) : view === 'month' ? (
         <CalendarView key={view} now={now} mode={view} />
       ) : calendar.configured ? (
         <>

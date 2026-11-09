@@ -42,6 +42,8 @@ export interface FamilyCalendar {
   /** The shared family calendar: events show who added them. */
   shared: boolean;
   order: number;
+  /** People (ids) whose events these are by default, e.g. Andrew's own calendar. An event can be reassigned. */
+  defaultWho?: string[];
 }
 
 /** families/{fid}/settings/calendarBridge */

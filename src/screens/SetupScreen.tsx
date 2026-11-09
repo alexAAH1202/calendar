@@ -10,12 +10,15 @@ import { routineId } from '../data/timeOfDay';
 import { TIMES_OF_DAY, type Person, type TimeOfDay } from '../data/types';
 import { WallSetup } from '../wall/WallSetup';
 import { RoutinesView } from './RoutinesView';
+import { AdultSettings } from '../components/AdultSettings';
 import { TravelSetup } from '../now/TravelSetup';
 
 type Section = 'children' | 'routines' | 'calendar' | 'wall' | 'family';
 
 interface Props {
   people: Person[];
+  /** Adults with a row on the calendar timeline (no account needed). */
+  adults: Person[];
   /** The family panel (invite, sign out); missing when running on one device only. */
   familyPanel?: ReactNode;
   onExit: () => void;
@@ -26,7 +29,7 @@ interface Props {
 }
 
 /** Parent: setting up the app. Children and their settings, the calendar connection, the family. */
-export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld, currentTod }: Props) {
+export function SetupScreen({ people, adults, familyPanel, onExit, header, wakeLockHeld, currentTod }: Props) {
   const store = useStore();
   const [section, setSection] = useState<Section>('children');
   const [childId, setChildId] = useState<string | undefined>(people[0]?.id);
@@ -60,7 +63,7 @@ export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld,
       <div className="editor-row">
         <Tabs<Section> label="Setup" value={section} onChange={setSection} withIcons
           options={[
-            { value: 'children', label: 'Children', icon: '🧒' },
+            { value: 'children', label: 'People', icon: '🧒' },
             { value: 'routines', label: 'Routines', icon: '✅' },
             { value: 'calendar', label: 'Calendar', icon: '🔗' },
             { value: 'wall', label: 'Wall', icon: '🖥️' },
@@ -98,6 +101,7 @@ export function SetupScreen({ people, familyPanel, onExit, header, wakeLockHeld,
           ) : (
             <p className="hint">Add a child to start.</p>
           )}
+          <AdultSettings adults={adults} everyone={[...people, ...adults]} />
         </>
       )}
     </main>

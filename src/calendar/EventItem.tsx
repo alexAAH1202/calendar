@@ -19,6 +19,9 @@ export function EventItem({ event, day, compact = false, onEdit }: {
   const by = cal.addedBy(event);
   const travel = event.allDay ? 0 : Math.max(0, cal.travel[extrasKey(event)] ?? 0);
   const leave = travel ? ` · leave ${format(event.start! - travel * 60_000, 'h:mm a').toLowerCase()}` : '';
+  // Who it is for: their badges (and their names in words), else the calendar's own badge.
+  const forPeople = cal.whoFor(event).map((id) => cal.lanePeople.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
+  const forNames = forPeople.map((p) => p.name).join(', ');
   return (
     <li className={`event ${compact ? 'event--compact' : ''} ${onEdit ? 'event--editable' : ''}`} style={{ '--cal': c?.colour ?? '#9aa7b1' } as CSSProperties}>
       {onEdit && (
@@ -26,16 +29,21 @@ export function EventItem({ event, day, compact = false, onEdit }: {
       )}
       <span className="event-text">
         <span className="event-title">{event.title}</span>
-        <span className="event-time">{timeLabel(event, day)}{leave}</span>
+        <span className="event-time">{timeLabel(event, day)}{leave}{compact && forNames ? ` · ${forNames}` : ''}</span>
         {!compact && (
           <span className="event-meta">
             {c?.label}
+            {forNames ? ` · for ${forNames}` : ''}
             {by ? ` · added by ${by}` : ''}
             {event.location ? ` · ${event.location}` : ''}
           </span>
         )}
       </span>
-      {!compact && c && <Avatar name={by ?? c.label} colour={c.colour} size={44} />}
+      {!compact && (forPeople.length > 0 ? (
+        <span className="event-who">
+          {forPeople.slice(0, 4).map((p) => <Avatar key={p.id} name={p.name} colour={p.colour} image={p.avatar} size={40} />)}
+        </span>
+      ) : c && <Avatar name={by ?? c.label} colour={c.colour} size={44} />)}
     </li>
   );
 }

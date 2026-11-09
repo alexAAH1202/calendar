@@ -22,5 +22,11 @@ export function usePeople(store: FamilyStore) {
     .map((p) => ({ ...p, colour: personColour(p.colour) }))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
 
-  return { children, loaded };
+  /** Adults on the family's timeline: people without accounts (e.g. the other parent) are listed here. */
+  const adults = people
+    .filter((p) => p.role === 'parent')
+    .map((p) => ({ ...p, colour: personColour(p.colour) }))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+
+  return { children, adults, loaded };
 }

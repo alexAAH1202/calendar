@@ -3,6 +3,7 @@ import { useStore } from '../data/StoreContext';
 import { BridgeError, bridgeErrorText, createBridge, validBridgeUrl } from './bridge';
 import { useCalendarData } from './CalendarContext';
 import type { BridgeCalendar, FamilyCalendar } from './types';
+import { WhoChips } from './WhoChips';
 
 /** Firestore-safe document id for a Google calendar id. */
 export const calendarDocId = (googleId: string) => googleId.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 120);
@@ -56,6 +57,7 @@ export function CalendarSetup() {
       writable: g.owned,
       shared: false,
       order: cal.calendars.length,
+      defaultWho: [],
     });
   };
 
@@ -99,6 +101,8 @@ export function CalendarSetup() {
                       <input value={c.label} onChange={(e) => save({ ...c, label: e.target.value.slice(0, 30) })}
                         aria-label={`Name on the wall for ${g.name}`} />
                     </label>
+                    <WhoChips people={cal.lanePeople} value={c.defaultWho ?? []} label="Whose calendar is this? (its events go in their row unless you change one)"
+                      onChange={(ids) => save({ ...c, defaultWho: ids })} />
                     <label className="check">
                       <input type="checkbox" checked={c.shared} onChange={(e) => save({ ...c, shared: e.target.checked })} />
                       <span>Shared family calendar (show who added events)</span>
