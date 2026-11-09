@@ -12,6 +12,7 @@ const withoutEmpty = (s: Step): Step => {
   const out = { ...s } as Step & { timerSeconds?: number };
   delete out.timerSeconds;
   if (!out.essential) delete out.essential;
+  if (!out.when) delete out.when;
   return out;
 };
 const sameSteps = (a: Step[], b: Step[]) => JSON.stringify(a) === JSON.stringify(b);
@@ -114,7 +115,7 @@ export function useRoutineSet(store: FamilyStore, seeds: Routine[]) {
     setEmoji: (rid: string, id: string, emoji: string) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? { ...s, image: `emoji:${emoji}` } : s))),
     /** Changes a step's stars or whether it is essential. */
-    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'stars' | 'essential'>>) =>
+    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'stars' | 'essential' | 'when'>>) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? withoutEmpty({ ...s, ...patch }) : s))),
     /** Sets (or with "" clears) the time a list should be finished by. */
     setFinishBy: (rid: string, finishBy: string) => {

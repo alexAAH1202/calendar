@@ -7,6 +7,8 @@ export interface Step {
   stars: number;
   /** Still shown on a low-energy or running-late day. */
   essential?: boolean;
+  /** Only on school days ('school') or only on days with no school ('off'). Unset: every day. */
+  when?: 'school' | 'off';
 }
 
 export const TIMES_OF_DAY = ['morning', 'afternoon', 'evening'] as const;

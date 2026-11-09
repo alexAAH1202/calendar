@@ -119,6 +119,12 @@ export function EventSheet({ target, onClose }: { target: SheetTarget; onClose: 
             <label htmlFor="ev-where">Where (optional)</label>
             <input id="ev-where" value={f.location} onChange={(e) => set('location', e.target.value)} />
             <WhoChips people={cal.lanePeople} value={shownWho} onChange={setChosenWho} />
+            {f.title.trim() && shownWho.length > 0 && (
+              <button type="button" className="pill"
+                onClick={() => cal.saveRules([...cal.rules.filter((r) => r.match.toLowerCase() !== f.title.trim().toLowerCase()), { match: f.title.trim(), who: shownWho }])}>
+                Always use this for events titled “{f.title.trim()}”
+              </button>
+            )}
             {!f.allDay && <TravelField value={travel} onChange={setTravelMin} />}
             <div className="sheet-actions">
               <button type="submit" className="btn btn--primary" disabled={busy || !f.title.trim()}>

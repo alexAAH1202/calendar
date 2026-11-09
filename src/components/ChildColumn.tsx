@@ -18,7 +18,8 @@ import { RewardBar } from './RewardBar';
 import { forMode } from '../now/dayMode';
 import { useMode } from '../now/DayModeContext';
 import { FinishBy } from '../now/FinishBy';
-import { DEFAULT_SCHOOL, schoolDoneMessage, schoolLeaveAt, type SchoolSettings } from '../now/school';
+import { isSchoolDay } from '../school/vic';
+import { DEFAULT_SCHOOL, forSchoolDay, schoolDoneMessage, schoolLeaveAt, type SchoolSettings } from '../now/school';
 import { useSettingsDoc } from '../now/useSettingsDoc';
 
 /** The routine a person has for a time of day before anything is saved. */
@@ -41,7 +42,7 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   const doneMessage = schoolDoneMessage(now, tod, school);
   const routine = set.routines[seed.id];
   // On a low-energy or running-late day only the essential steps show, and those count as the whole list.
-  const steps = forMode(routine?.steps ?? [], mode);
+  const steps = forMode(forSchoolDay(routine?.steps ?? [], isSchoolDay(now, school)), mode);
   const visible = displaySteps(steps, done, profile.completedBehaviour);
   const allDone = steps.length > 0 && steps.every((s) => done.has(s.id));
 

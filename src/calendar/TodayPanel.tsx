@@ -1,3 +1,4 @@
+import { DayNote } from '../school/DayNote';
 import { addDays, format, isSameDay } from 'date-fns';
 import { WeekStrip } from '../components/WeekStrip';
 import { dayKey } from '../date/dayKey';
@@ -19,7 +20,7 @@ export function TodayPanel({ now, selected, onSelect }: { now: Date; selected: D
   return (
     <aside className="today-panel" aria-label="Today’s events">
       <WeekStrip selected={selected} today={now} onSelect={onSelect} withControls={false} />
-      <h2>{isToday ? 'Today' : format(selected, 'EEEE d')}</h2>
+      <h2>{isToday ? 'Today' : format(selected, 'EEEE d')}<DayNote day={today} holidays /></h2>
       {todays.length ? (
         <ul className="events">{todays.map((e) => <EventItem key={e.id} event={e} day={today} />)}</ul>
       ) : (

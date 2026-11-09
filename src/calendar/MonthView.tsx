@@ -1,3 +1,4 @@
+import { DayNote } from '../school/DayNote';
 import type { CSSProperties } from 'react';
 import { format, isSameDay, isSameMonth } from 'date-fns';
 import { dayKey } from '../date/dayKey';
@@ -27,6 +28,7 @@ export function MonthView({ now, anchor, onPickDay }: { now: Date; anchor: Date;
               ) : (
                 <span className="month-date">{format(d, 'd')}</span>
               )}
+              <DayNote day={key} />
               <ul className="month-events">
                 {list.slice(0, SHOWN).map((e) => (
                   <li key={e.id} style={{ '--cal': cal.calendarFor(e)?.colour ?? '#9aa7b1' } as CSSProperties}>{e.title}</li>

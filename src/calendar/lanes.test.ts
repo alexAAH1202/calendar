@@ -80,3 +80,27 @@ describe('the timeline', () => {
     expect(ticks({ start: 480, end: 1200 })[0].at).toBe(0);
   });
 });
+
+describe('assign rules', () => {
+  const people: LanePerson[] = [
+    { id: 'a', name: 'Astrid', colour: '#000', kind: 'child' },
+    { id: 'e', name: 'Ethan', colour: '#000', kind: 'child' },
+    { id: 'x', name: 'Alex', colour: '#000', kind: 'adult' },
+  ];
+  const t = (title: string) => ({ ...ev(title, 9, 10) });
+  const cal = { defaultWho: ['x'] } as never;
+  it('names in the title beat the calendar default', () => expect(assignedTo(t('Astrid swimming'), {}, cal, people)).toEqual(['a']));
+  it('a rule beats names in the title', () => expect(assignedTo(t('Astrid swimming'), {}, cal, people, [{ match: 'swimming', who: ['e'] }])).toEqual(['e']));
+  it("the event's own choice beats everything", () => expect(assignedTo(t('Astrid swimming'), { [extrasKey(t('Astrid swimming'))]: [] }, cal, people, [{ match: 'swimming', who: ['e'] }])).toEqual([]));
+  it('falls back to the calendar default', () => expect(assignedTo(t('Dentist'), {}, cal, people)).toEqual(['x']));
+});
+
+describe('dragging between rows', () => {
+  it('moves out of one row into another', async () => {
+    const { reassign } = await import('./LaneDay');
+    expect(reassign(['a'], 'a', 'e')).toEqual(['e']);
+    expect(reassign(['a', 'x'], 'a', 'e')).toEqual(['x', 'e']);
+    expect(reassign(['a'], 'a', 'everyone')).toEqual([]);
+    expect(reassign([], 'everyone', 'a')).toEqual(['a']);
+  });
+});

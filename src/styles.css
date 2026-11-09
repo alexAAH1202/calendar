@@ -1247,3 +1247,12 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 }
 .pill-group { flex-wrap: wrap; max-width: 100%; }
 .lanes-top > * { min-width: 0; }
+
+.field-inline { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.field-inline select { min-height: 48px; font: inherit; }
+.day-note { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: var(--surface-2, #eef3fb); font-size: 0.8em; }
+.day-note--holiday { background: #fde8c8; }
+.lane-track.is-over { background: rgba(47, 111, 214, 0.12); }
+.lane-label.is-dragging { opacity: 0.4; }
+.lane-label { touch-action: manipulation; -webkit-touch-callout: none; user-select: none; }
+.lane-drag { padding: 6px 12px; border-radius: 10px; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 700; }

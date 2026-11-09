@@ -1,3 +1,4 @@
+import { WhoRules } from './WhoRules';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useStore } from '../data/StoreContext';
 import { BridgeError, bridgeErrorText, createBridge, validBridgeUrl } from './bridge';
@@ -122,6 +123,7 @@ export function CalendarSetup() {
         Anyone with the key can read and add events on these calendars. It is stored only in your family’s data,
         which only the two parents’ accounts can read. To change it, run resetKey() in Apps Script and reconnect.
       </p>
+      <WhoRules />
     </section>
   );
 }

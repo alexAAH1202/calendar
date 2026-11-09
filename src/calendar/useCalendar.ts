@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FamilyStore } from '../data/store';
 import { personColour } from '../data/profile';
 import type { Person } from '../data/types';
-import { assignedTo, buildLanePeople, type WhoMap } from './lanes';
+import { assignedTo, buildLanePeople, type WhoMap, type WhoRule } from './lanes';
 import { BridgeError, createBridge, type BridgeErrorKind } from './bridge';
 import { readCache, writeCache } from './cache';
 import { fetchWindow } from './dates';
@@ -33,6 +33,7 @@ export function useCalendar(store: FamilyStore, parents: { id: string; name: str
   const [parentNames, setParentNames] = useState<Record<string, string>>({});
   const [travel, setTravel] = useState<TravelMinutes>({});
   const [who, setWho] = useState<WhoMap>({});
+  const [rules, setRules] = useState<WhoRule[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const cached = useRef(readCache());
   const [events, setEvents] = useState<CalEvent[]>(cached.current?.events ?? []);
@@ -64,6 +65,7 @@ export function useCalendar(store: FamilyStore, parents: { id: string; name: str
     [store],
   );
   useEffect(() => store.subscribePeople(setPeople), [store]);
+  useEffect(() => store.watchDoc<{ rules?: WhoRule[] }>(['settings', 'whoRules'], (d) => setRules(d?.rules ?? [])), [store]);
   useEffect(
     () => store.watchDoc<{ emails?: Record<string, string> }>(['settings', 'parents'], (d) => setParentNames(d?.emails ?? {})),
     [store],
@@ -167,12 +169,15 @@ export function useCalendar(store: FamilyStore, parents: { id: string; name: str
   const parentsKey = JSON.stringify(parents);
   const lanePeople = useMemo(() => buildLanePeople(people, parents, personColour), [people, parentsKey]); // parentsKey stands for parents
   const whoFor = useCallback(
-    (e: CalEvent) => assignedTo(e, who, byGoogleId.get(e.calendarId), lanePeople),
-    [who, byGoogleId, lanePeople],
+    (e: CalEvent) => assignedTo(e, who, byGoogleId.get(e.calendarId), lanePeople, rules),
+    [who, rules, byGoogleId, lanePeople],
   );
 
   return {
     lanePeople,
+    /** Automatic assign rules (words in a title → people). */
+    rules,
+    saveRules: (next: WhoRule[]) => void store.putDoc(['settings', 'whoRules'], { rules: next }, true),
     /** The people (ids) an event is for; empty means everyone. Our own data, so it works on any event. */
     whoFor,
     /** True when the event has its own choice (otherwise it follows its calendar's default). */

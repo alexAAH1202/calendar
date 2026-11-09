@@ -18,6 +18,9 @@ import { useRoutineSet } from '../data/useRoutineSet';
 import { choreStarDelta, doneOn, overdue, showsOn, tick, untick, type Chore } from '../lists/chores';
 import { starChange } from '../lists/stars';
 import { forMode } from '../now/dayMode';
+import { DEFAULT_SCHOOL, forSchoolDay, type SchoolSettings } from '../now/school';
+import { isSchoolDay } from '../school/vic';
+import { useSettingsDoc } from '../now/useSettingsDoc';
 import { useMode } from '../now/DayModeContext';
 import { UpNextBar } from '../now/UpNextBar';
 import { TodaysThree } from '../lists/TodaysThree';
@@ -57,10 +60,11 @@ export function DayAgenda({ children, now }: { children: Person[]; now: Date }) 
   const chores = useDocs<{ items?: Chore[] }>(store, people.map((p) => ['chores', p.id]));
 
   const mode = useMode();
+  const school = useSettingsDoc<SchoolSettings>(store, 'school', DEFAULT_SCHOOL).value;
   const items: AgendaItem[] = [];
   if (isToday) {
     for (const tod of TIMES_OF_DAY) {
-      const lists = children.map((c) => forMode(routines.routines[routineId(c.id, tod)]?.steps ?? [], mode));
+      const lists = children.map((c) => forMode(forSchoolDay(routines.routines[routineId(c.id, tod)]?.steps ?? [], isSchoolDay(new Date(), school)), mode));
       const longest = Math.max(0, ...lists.map((l) => l.length));
       for (let i = 0; i < longest; i++) {
         children.forEach((c, ci) => {

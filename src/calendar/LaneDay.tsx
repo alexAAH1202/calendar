@@ -1,11 +1,33 @@
 import { addDays, format, isSameDay } from 'date-fns';
-import { Fragment, type CSSProperties } from 'react';
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
+import { DayNote } from '../school/DayNote';
 import { Avatar } from '../components/Avatar';
 import { dayKey } from '../date/dayKey';
 import { useCalendarData } from './CalendarContext';
 import { eventsOn, timeLabel } from './dates';
 import { dayWindow, lanesFor, packRows, place, shortTime, ticks, type TimeWindow } from './lanes';
 import type { CalEvent } from './types';
+
+const HOLD = { delay: 250, tolerance: 8 };
+const EVERYONE_LANE = 'everyone';
+
+/** Moves an event between rows: out of the row it was dragged from, into the one it was dropped on. */
+export function reassign(current: string[], from: string, to: string): string[] {
+  if (to === EVERYONE_LANE) return [];
+  const rest = from === EVERYONE_LANE ? current : current.filter((id) => id !== from);
+  return rest.includes(to) ? rest : [...rest, to];
+}
+
+function DragLabel({ id, lane, children }: { id: string; lane: string; children: (p: { setNodeRef: (el: HTMLElement | null) => void; props: Record<string, unknown>; dragging: boolean }) => ReactNode }) {
+  const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id, data: { lane } });
+  return <>{children({ setNodeRef, props: { ...attributes, ...listeners }, dragging: isDragging })}</>;
+}
+
+function DropTrack({ lane, className, style, children }: { lane: string; className: string; style: CSSProperties; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: lane });
+  return <div ref={setNodeRef} className={`${className} ${isOver ? 'is-over' : ''}`} style={style}>{children}</div>;
+}
 
 const ROW = 38; // px per stacked row of events
 
@@ -33,14 +55,25 @@ export function LaneDay({ day, now, onEdit, window: shared }: { day: Date; now: 
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const showNow = isSameDay(day, now) && nowMin >= win.start && nowMin <= win.end;
   const marks = ticks(win);
+  const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: HOLD }), useSensor(TouchSensor, { activationConstraint: HOLD }));
+  const [dragging, setDragging] = useState<CalEvent | null>(null);
+  const onDragEnd = (ev: DragEndEvent) => {
+    setDragging(null);
+    const event = events.find((x) => x.id === ev.active.id);
+    const to = ev.over?.id as string | undefined;
+    const from = ev.active.data.current?.lane as string | undefined;
+    if (!event || !to || !from || to === from) return;
+    cal.setWho(event, reassign(cal.whoFor(event), from, to));
+  };
   const names = (e: CalEvent) => cal.whoFor(e).map((id) => cal.lanePeople.find((p) => p.id === id)?.name).filter(Boolean).join(', ');
 
   return (
     <section className="lane-day" aria-label={`${dayTitle(day, now)} ${format(day, 'd MMMM')}`}>
       <div className="lane-scroll">
+        <DndContext sensors={sensors} onDragStart={(ev) => setDragging(events.find((x) => x.id === ev.active.id) ?? null)} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
         <div className="lane-inner">
           <header className="lane-head">
-            <h3><span className={isSameDay(day, now) ? 'lane-today' : ''}>{dayTitle(day, now)}</span> <span className="lane-date">{format(day, 'd')}</span></h3>
+            <h3><span className={isSameDay(day, now) ? 'lane-today' : ''}>{dayTitle(day, now)}</span> <span className="lane-date">{format(day, 'd')}</span><DayNote day={dayKey(day)} holidays /></h3>
             {allDay.length > 0 && (
               <ul className="lane-allday" aria-label="All day">
                 {allDay.map((e) => (
@@ -76,7 +109,7 @@ export function LaneDay({ day, now, onEdit, window: shared }: { day: Date; now: 
                   {lane.person ? <Avatar name={lane.person.name} colour={lane.person.colour} image={lane.person.avatar} size={30} /> : <span className="lane-home" aria-hidden="true">🏠</span>}
                   <span>{lane.person?.name ?? 'Everyone'}</span>
                 </div>
-                <div className="lane-track" style={{ height: rows * ROW + 6 }}>
+                <DropTrack lane={lane.person?.id ?? EVERYONE_LANE} className="lane-track" style={{ height: rows * ROW + 6 }}>
                   {marks.map((m) => <span key={m.label} className="lane-grid" style={{ left: `${m.at}%` }} aria-hidden="true" />)}
                   {showNow && <span className="lane-now" style={{ left: `${((nowMin - win.start) / span) * 100}%` }} aria-hidden="true" />}
                   {placed.map(({ event, row }) => {
@@ -85,19 +118,23 @@ export function LaneDay({ day, now, onEdit, window: shared }: { day: Date; now: 
                     return (
                       <Fragment key={event.id}>
                         <span className="lane-bar" aria-hidden="true" style={{ left: `${pos.left}%`, width: `${pos.width}%`, top: row * ROW + 3, '--cal': c?.colour ?? '#9aa7b1' } as CSSProperties} />
-                        <button type="button" className="lane-label" disabled={!onEdit} onClick={() => onEdit?.(event)}
+                        <DragLabel id={event.id} lane={lane.person?.id ?? EVERYONE_LANE}>{({ setNodeRef, props, dragging: isDrag }) => (
+                        <button type="button" ref={setNodeRef} {...props} className={`lane-label ${isDrag ? 'is-dragging' : ''}`} disabled={!onEdit} onClick={() => onEdit?.(event)}
                           style={{ left: `${pos.left}%`, top: row * ROW + 3, maxWidth: `${100 - pos.left}%`, '--cal': c?.colour ?? '#9aa7b1' } as CSSProperties}
                           aria-label={`${event.title}, ${timeLabel(event, key)}${c ? `, ${c.label} calendar` : ''}${names(event) ? `, for ${names(event)}` : ', for everyone'}`}>
                           <b>{shortTime(event.start!)}</b> {event.title}
                         </button>
+                        )}</DragLabel>
                       </Fragment>
                     );
                   })}
-                </div>
+                </DropTrack>
               </div>
             );
           })}
         </div>
+        <DragOverlay>{dragging && <div className="lane-drag">{dragging.title}</div>}</DragOverlay>
+        </DndContext>
       </div>
     </section>
   );

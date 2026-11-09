@@ -403,3 +403,15 @@ Screens never touch storage directly; they use the hooks in `src/data/`, which t
 - Screen reader announcements for drag and drop (dnd-kit defaults, English only).
 - What happens when localStorage is full or blocked (private mode): the retry notice should appear; not forced.
 - Midnight swap with the real clock (only the date maths and the hook's day change are tested).
+
+## School terms, public holidays and days with no school
+
+- `src/school/vic.ts` holds Victorian government school terms and Victorian public holidays for 2026–2027. They are typed in, not fetched, so check them against vic.gov.au each year and add the next year.
+- No school means: Saturday/Sunday, a public holiday, school holidays, or a day listed in `settings/school.daysOff` (pupil-free days). `holidaysUntil` still works.
+- Each routine step has **Shown on** (Parent → Routines → ⋯): every day, school days only, or days with no school only. The wall and phone lists drop steps that do not belong to today. The school countdown and the iPad message only run on school days.
+- Term and holiday notes show in the day heads on the timeline, week, month and today panel.
+
+## Assigning events faster
+
+- Hold a bar on the timeline (about a quarter of a second) and drag it to another person's row; dropping on Everyone clears it.
+- Order of precedence: the event's own choice, then a rule (Parent → Calendar → Assign automatically, or "Always use this for events titled…" in the event sheet), then a first name in the title, then the calendar's default people, then everyone.

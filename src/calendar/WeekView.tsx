@@ -1,3 +1,4 @@
+import { DayNote } from '../school/DayNote';
 import { format, isSameDay } from 'date-fns';
 import { dayKey } from '../date/dayKey';
 import { useCalendarData } from './CalendarContext';
@@ -20,6 +21,7 @@ export function WeekView({ now, anchor, onEdit }: { now: Date; anchor: Date; onE
               <h3>
                 <span className="week-dow">{format(d, 'EEE')}</span> <span className="week-date">{format(d, 'd')}</span>
                 {isSameDay(d, now) && <span className="visually-hidden"> (today)</span>}
+                <DayNote day={key} />
               </h3>
               {list.length ? (
                 <ul className="events">{list.map((e) => <EventItem key={e.id} event={e} day={key} compact onEdit={onEdit} />)}</ul>

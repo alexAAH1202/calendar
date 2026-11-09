@@ -47,14 +47,32 @@ export function buildLanePeople(people: Person[], parents: { id: string; name: s
   return [...adults, ...kids];
 }
 
+/** "Anything titled this goes to these people." */
+export interface WhoRule { match: string; who: string[] }
+
+/** People named in a title ("Astrid swimming"): whole first names only. */
+export function namesInTitle(title: string, people: LanePerson[]): string[] {
+  const words = new Set(title.toLowerCase().split(/[^\p{L}\p{N}]+/u));
+  return people.filter((p) => words.has(first(p.name))).map((p) => p.id);
+}
+
 /**
- * Who an event is for. A choice made on the event itself wins (an empty list means "everyone");
- * otherwise the calendar's default people; otherwise everyone. People who no longer exist are ignored.
+ * Who an event is for, strongest first: a choice made on the event itself (an empty list means "everyone"),
+ * then a rule whose words appear in the title, then people named in the title, then the calendar's
+ * default people; otherwise everyone. People who no longer exist are ignored.
  */
-export function assignedTo(e: CalEvent, who: WhoMap, calendar: FamilyCalendar | undefined, people: LanePerson[]): string[] {
+export function assignedTo(e: CalEvent, who: WhoMap, calendar: FamilyCalendar | undefined, people: LanePerson[], rules: WhoRule[] = []): string[] {
   const known = new Set(people.map((p) => p.id));
   const explicit = who[extrasKey(e)];
-  const ids = explicit !== undefined ? explicit : calendar?.defaultWho ?? [];
+  const title = e.title.toLowerCase();
+  const rule = rules.find((r) => r.match.trim() && title.includes(r.match.trim().toLowerCase()));
+  let ids: string[];
+  if (explicit !== undefined) ids = explicit;
+  else if (rule) ids = rule.who;
+  else {
+    const named = namesInTitle(e.title, people);
+    ids = named.length ? named : calendar?.defaultWho ?? [];
+  }
   return ids.filter((id) => known.has(id));
 }
 
