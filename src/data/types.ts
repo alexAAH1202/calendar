@@ -5,8 +5,6 @@ export interface Step {
   /** "emoji:👕"; a symbol-library id or small data URL may follow later. */
   image?: string;
   stars: number;
-  /** Still shown on a low-energy or running-late day. */
-  essential?: boolean;
   /** Only on school days ('school') or only on days with no school ('off'). Unset: every day. */
   when?: 'school' | 'off';
 }

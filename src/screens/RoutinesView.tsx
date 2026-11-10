@@ -121,7 +121,7 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
           </p>
           <EditList
             steps={steps}
-            metaFor={(st) => [st.essential ? '✱ essential' : '', st.when === 'school' ? '🎒 school days' : st.when === 'off' ? '🏠 days off' : ''].filter(Boolean).join(' · ') || undefined}
+            metaFor={(st) => [st.when === 'school' ? '🎒 school days' : st.when === 'off' ? '🏠 days off' : ''].filter(Boolean).join(' · ') || undefined}
             expandedId={expandedId}
             onDragMove={(a, b) => set.dragMove(rid, a, b)}
             onUp={(id) => set.moveUp(rid, id)}
@@ -146,10 +146,6 @@ function RoutineEditor({ child, siblings, set, currentTod }: {
                     Duplicate for {sib.name}
                   </button>
                 ))}
-                <label className="check">
-                  <input type="checkbox" checked={!!step.essential} onChange={(e) => set.updateStep(rid, step.id, { essential: e.target.checked })} />
-                  <span>Essential on low-energy days</span>
-                </label>
                 <label className="field-inline">
                   <span>Shown on</span>
                   <select value={step.when ?? ''} onChange={(e) => set.updateStep(rid, step.id, { when: (e.target.value || undefined) as Step['when'] })}>

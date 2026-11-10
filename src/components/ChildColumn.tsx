@@ -15,8 +15,6 @@ import { Avatar } from './Avatar';
 import { ScrollList } from './ScrollList';
 import { FirstThen } from './FirstThen';
 import { RewardBar } from './RewardBar';
-import { forMode } from '../now/dayMode';
-import { useMode } from '../now/DayModeContext';
 import { FinishBy } from '../now/FinishBy';
 import { isSchoolDay } from '../school/vic';
 import { DEFAULT_SCHOOL, forSchoolDay, schoolDoneMessage, schoolLeaveAt, type SchoolSettings } from '../now/school';
@@ -36,13 +34,11 @@ export function ChildColumn({ person, day, tod, now }: { person: Person; day: st
   const set = useRoutineSet(store, [seed]);
   const { done, setStep, loaded: dayLoaded } = useCompletion(store, day, person.id);
   const palette = PALETTES[profile.palette];
-  const mode = useMode();
   const school = useSettingsDoc<SchoolSettings>(store, 'school', DEFAULT_SCHOOL).value;
   // School mornings: finishing the list earns the family's message (e.g. the iPad in the car).
   const doneMessage = schoolDoneMessage(now, tod, school);
   const routine = set.routines[seed.id];
-  // On a low-energy or running-late day only the essential steps show, and those count as the whole list.
-  const steps = forMode(forSchoolDay(routine?.steps ?? [], isSchoolDay(now, school)), mode);
+  const steps = forSchoolDay(routine?.steps ?? [], isSchoolDay(now, school));
   const visible = displaySteps(steps, done, profile.completedBehaviour);
   const allDone = steps.length > 0 && steps.every((s) => done.has(s.id));
 

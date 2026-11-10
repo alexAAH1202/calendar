@@ -22,7 +22,6 @@ import { newId } from '../data/ids';
 import { useStore } from '../data/StoreContext';
 import { dayKey } from '../date/dayKey';
 import { moveItem } from '../ordering/order';
-import { useMode } from '../now/DayModeContext';
 import {
   PRIORITIES,
   PRIORITY_LABELS,
@@ -50,14 +49,12 @@ const niceDate = (key: string) => format(new Date(`${key}T12:00:00`), 'EEE d MMM
 export function BrainDump({ capture = false }: { capture?: boolean }) {
   const { me, parents } = useFamilyInfo();
   const store = useStore();
-  const mode = useMode();
   const list = useItemList<DumpItem>(store, ['braindump', me.id]);
   const today = dayKey(new Date());
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [open, setOpen] = useState<'none' | 'done' | 'waiting' | 'archive'>('none');
-  const [showAll, setShowAll] = useState(false);
   const [message, setMessage] = useState<string>();
   const input = useRef<HTMLInputElement>(null);
   const items = list.items;
@@ -68,7 +65,6 @@ export function BrainDump({ capture = false }: { capture?: boolean }) {
   const waiting = items.filter((i) => snoozed(i, today));
   const old = items.filter((i) => archived(i, today, now));
   const done = items.filter((i) => i.done);
-  const justToday = mode !== 'normal' && !showAll;
 
   useEffect(() => {
     if (capture) input.current?.focus();
@@ -196,9 +192,7 @@ export function BrainDump({ capture = false }: { capture?: boolean }) {
         </section>
       )}
 
-      {justToday ? (
-        <button type="button" className="btn" onClick={() => setShowAll(true)}>Show everything (just today’s picks are shown on this kind of day)</button>
-      ) : !list.loaded ? <p className="hint">Loading…</p> : (
+      {!list.loaded ? <p className="hint">Loading…</p> : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <div className="dump-groups">
             {PRIORITIES.map((p) => (

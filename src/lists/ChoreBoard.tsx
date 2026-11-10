@@ -11,8 +11,6 @@ import { RewardBar } from '../components/RewardBar';
 import { cheerFor } from '../components/celebrate';
 import { useEffect, useRef, useState } from 'react';
 import { useItemList } from './useItemList';
-import { forMode } from '../now/dayMode';
-import { useMode } from '../now/DayModeContext';
 
 /** The wall's Chores view: today's chores and to-dos for each child, then each parent. */
 export function ChoreBoard({ children, day }: { children: Person[]; day: string }) {
@@ -33,8 +31,7 @@ function ChoreColumn({ person, day }: { person: Person; day: string }) {
   const list = useItemList<Chore>(store, ['chores', person.id]);
   const profile = profileOf(person);
   const palette = PALETTES[profile.palette];
-  const mode = useMode();
-  const shown = forMode(list.items.filter((c) => showsOn(c, day)), mode);
+  const shown = list.items.filter((c) => showsOn(c, day));
 
   const [cheer, setCheer] = useState<{ key: number; text: string; stars: number } | null>(null);
   const cheers = useRef(0);

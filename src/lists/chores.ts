@@ -26,8 +26,6 @@ export interface Chore {
   doneOn?: string;
   /** Due date before the last tick, so an accidental tick can be undone exactly. */
   prevDue?: string;
-  /** Still shown on a low-energy or running-late day. */
-  essential?: boolean;
   /** Stars a child earns for doing it (default 1; 0 for none). Parents' chores earn none. */
   stars?: number;
 }

@@ -11,7 +11,7 @@ type Changes = Record<string, Step[]>;
 const withoutEmpty = (s: Step): Step => {
   const out = { ...s } as Step & { timerSeconds?: number };
   delete out.timerSeconds;
-  if (!out.essential) delete out.essential;
+  delete (out as { essential?: boolean }).essential;
   if (!out.when) delete out.when;
   return out;
 };
@@ -114,8 +114,8 @@ export function useRoutineSet(store: FamilyStore, seeds: Routine[]) {
       one(rid, [...stepsOf(rid), fresh({ title, image: `emoji:${emoji}`, stars: 1 })]),
     setEmoji: (rid: string, id: string, emoji: string) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? { ...s, image: `emoji:${emoji}` } : s))),
-    /** Changes a step's stars or whether it is essential. */
-    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'stars' | 'essential' | 'when'>>) =>
+    /** Changes a step's stars or when it is shown. */
+    updateStep: (rid: string, id: string, patch: Partial<Pick<Step, 'stars' | 'when'>>) =>
       one(rid, stepsOf(rid).map((s) => (s.id === id ? withoutEmpty({ ...s, ...patch }) : s))),
     /** Sets (or with "" clears) the time a list should be finished by. */
     setFinishBy: (rid: string, finishBy: string) => {

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { CalEvent } from '../calendar/types';
-import { forMode, modeFor } from './dayMode';
 import { extrasKey, finishByLeft, leaveText, minutesText, upNext, urgency } from './upNext';
 
 const at = (h: number, m = 0) => new Date(2026, 10, 9, h, m);
@@ -41,19 +40,5 @@ describe('urgency and words', () => {
   it('finish-by counts down to a local time', () => {
     expect(finishByLeft('08:20', at(8))).toBe(20 * 60_000);
     expect(finishByLeft('08:20', at(8, 30))).toBe(-10 * 60_000);
-  });
-});
-
-describe('day mode', () => {
-  it('goes back to normal the next day', () => {
-    expect(modeFor({ mode: 'low', date: '2026-11-09' }, '2026-11-09')).toBe('low');
-    expect(modeFor({ mode: 'low', date: '2026-11-08' }, '2026-11-09')).toBe('normal');
-    expect(modeFor(undefined, '2026-11-09')).toBe('normal');
-  });
-  it('shows only essentials, or everything when nothing is marked', () => {
-    const list = [{ id: 'a', essential: true }, { id: 'b' }, { id: 'c', essential: true }];
-    expect(forMode(list, 'low').map((i) => i.id)).toEqual(['a', 'c']);
-    expect(forMode(list, 'normal')).toHaveLength(3);
-    expect(forMode([{ id: 'x' } as { id: string; essential?: boolean }], 'late')).toHaveLength(1);
   });
 });

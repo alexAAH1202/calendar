@@ -919,29 +919,6 @@ h1 { font-weight: 800; letter-spacing: -0.01em; }
 .finish-by--verySoon .finish-by-text, .finish-by--now .finish-by-text { font-size: 23px; font-weight: 800; }
 .finish-by--past { margin: 0; font-size: 18px; color: var(--muted); background: transparent; }
 
-.mode-pill { font-size: 18px; white-space: nowrap; }
-.mode-pill--low { background: #e8e4fb; }
-.mode-pill--late { background: #fdebd8; }
-.mode-banner { margin: 0 0 14px; padding: 10px 18px; border-radius: 16px; font-size: 20px; font-weight: 700; }
-.mode-banner--low { background: #ece8fc; color: #3b2f72; }
-.mode-banner--late { background: #fdeedd; color: #6b3c0a; }
-.mode-options { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; }
-.mode-option {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 14px 18px;
-  border: 2px solid var(--line);
-  border-radius: 20px;
-  background: #fff;
-  text-align: left;
-  font: inherit;
-  color: var(--text);
-}
-.mode-option.is-selected { border-color: var(--primary); box-shadow: inset 0 0 0 2px var(--primary); }
-.mode-option-title { font-size: 24px; font-weight: 800; }
-.mode-option-text { font-size: 18px; color: var(--muted); }
 .editor-row--start { justify-content: flex-start; align-items: flex-end; }
 .editor-row--start .panel-text { flex-basis: 100%; }
 
@@ -960,8 +937,7 @@ h1 { font-weight: 800; letter-spacing: -0.01em; }
   .up-next { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'label left' 'title title' 'when when' 'bar bar'; padding: 12px 16px; }
   .up-next-title { font-size: 24px; }
   .up-next-left { font-size: 22px; }
-  .mode-pill { font-size: 15px; padding: 0 12px; }
-}
+  }
 
 /* Meals */
 .today-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; }
@@ -1020,8 +996,7 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 .pantry-section .shop-items { padding: 0; width: 100%; }
 @media (max-width: 900px) { .today-strip { grid-template-columns: 1fr; } }
 @media print {
-  .screen-header, .tabs, .editor-row, .add-step, .notice, .dinner-tonight, .mode-banner { display: none !important; }
-  .screen, .edit-surface { background: #fff !important; border: 0; padding: 0; }
+  .screen-header, .tabs, .editor-row, .add-step, .notice, .dinner-tonight,   .screen, .edit-surface { background: #fff !important; border: 0; padding: 0; }
   .shop-aisle { box-shadow: none; break-inside: avoid; }
 }
 /* Every labelled date, time and select box gets the same touch size. */
@@ -1041,7 +1016,6 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 .screen-header { flex-wrap: nowrap; }
 .screen-header .tabs--icons { flex: 1 1 auto; min-width: 0; overflow-x: auto; justify-content: center; }
 .header-controls { flex: none; display: flex; align-items: center; gap: 10px; }
-.mode-pill { font-size: 28px; padding: 0; }
 .hold-btn { min-width: var(--touch); min-height: var(--touch); padding: 0; font-size: 28px; border-radius: 50%; background: var(--pill); color: var(--text); }
 @media (max-width: 640px) {
   .screen-header { flex-wrap: wrap; }
@@ -1060,8 +1034,7 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; color
 
 /* Today on the wall fits the screen exactly: each child's list scrolls inside its own column. */
 .screen--fit { height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 16px; }
-.screen--fit > .screen-header, .screen--fit > .mode-banner, .screen--fit > .today-strip, .screen--fit > .dinner-tonight { flex: none; }
-.screen--fit > .today-layout, .screen--fit > .child-board { flex: 1 1 auto; min-height: 0; }
+.screen--fit > .screen-header, .screen--fit > .screen--fit > .today-layout, .screen--fit > .child-board { flex: 1 1 auto; min-height: 0; }
 .screen--fit .today-layout { align-items: stretch; }
 .screen--fit .today-layout > .child-board { height: 100%; min-height: 0; align-items: stretch; }
 .screen--fit .today-panel { overflow-y: auto; min-height: 0; }

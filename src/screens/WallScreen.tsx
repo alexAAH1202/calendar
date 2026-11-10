@@ -20,12 +20,9 @@ import { RoutinesBoard } from './RoutinesBoard';
 import { WhoPicker } from '../components/WhoPicker';
 import { SetupScreen } from './SetupScreen';
 import { ColesButton } from '../wall/ColesButton';
-import { DayModeContext } from '../now/DayModeContext';
-import { ModeBanner, ModeSwitch } from '../now/ModeSwitch';
 import { UpNextBar } from '../now/UpNextBar';
 import { DinnerTonight } from '../meals/DinnerTonight';
 import { MealsView } from '../meals/MealsView';
-import { useDayMode } from '../now/useDayMode';
 import { inSleepWindow } from '../wall/schedule';
 import { SleepScreen } from '../wall/SleepScreen';
 import { reloadApp } from '../wall/pwa';
@@ -60,7 +57,6 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   // (?view=braindump&capture=1 opens the brain dump ready to type).
   const home: View = isPhone ? 'agenda' : 'today';
   const [view, setView] = useState<View>(() => startView() ?? home);
-  const dayMode = useDayMode(store, day);
   const [panelDay, setPanelDay] = useState<Date | null>(null);
   const calendar = useCalendarData();
   const exitSetup = useCallback(() => setSetup(false), []);
@@ -111,7 +107,6 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
   const shownKids = who === 'all' ? children : children.filter((c) => c.id === who);
   const whoPicker = <WhoPicker children={children} value={children.some((c) => c.id === who) ? who : 'all'} onChange={setWho} />;
   return (
-    <DayModeContext.Provider value={dayMode.mode}>
     <main className={`screen ${childView ? 'screen--child' : ''} screen--wide ${view === 'today' || (view === 'routines' && !isPhone) ? 'screen--fit' : ''}`}>
       <header className="screen-header">
         {dateLine}
@@ -126,7 +121,6 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
             { value: 'month', label: 'Month', icon: '📅' },
           ]} />
         <div className="header-controls">
-          <ModeSwitch mode={dayMode.mode} onChange={dayMode.set} />
           {isPhone && updateReady && (
             <button type="button" className="pill pill--round" title="Update ready: tap to load" aria-label="Update ready: tap to load"
               onClick={() => void reloadApp()}>⬆️</button>
@@ -138,7 +132,6 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
           )}
         </div>
       </header>
-      <ModeBanner mode={dayMode.mode} />
 
       {view === 'agenda' ? (
         <DayAgenda children={children} now={now} />
@@ -179,7 +172,6 @@ export function WallScreen({ isPhone = false, parentTools }: Props) {
         </>
       )}
     </main>
-    </DayModeContext.Provider>
   );
 }
 

@@ -62,7 +62,7 @@ To try it on the tablet: run `npm run dev`, then open `http://<your-computer-ip>
 
 - The main screen's **Routines** tab is now for the children: each child's list for Morning, Afternoon or Evening
   (opens on the current one), to look at and tick, with no editing controls.
-- **Parent (⚙️) → Routines** holds the routine editor (add, reorder, templates, finish time, essentials, duplicate).
+- **Parent (⚙️) → Routines** holds the routine editor (add, reorder, templates, finish time, duplicate).
 - **Both / Astrid / Ethan** on Today and Routines lets a child show just their own list (wider) or everyone's;
   it goes back to Both after five quiet minutes.
 
@@ -103,10 +103,6 @@ A 🍽 Meals tab with the family's own planner, now shared by every device (Fire
   over the last hour. At 15, 5 and 1 minute the border and words get stronger; nothing flashes.
 - **Finish by:** each routine list can have a finish time (Routines tab). Each child's column shows
   "Finish by 8:20 · 12 min left · 3 steps to go", stronger at 15 and 5 minutes, calm once passed.
-- **Low-energy day / Running late** (pill on the main screen, family-wide, back to normal by itself the next day):
-  only steps and chores marked "Essential on low-energy days" (⋯) show, and finishing those counts as all done
-  (with the usual cheer and stars). If nothing in a list is marked essential, the list shows as usual. The brain dump
-  shows just today's picks, with "Show everything".
 - **Brain dump:** ☆ picks up to three things for today ("Today's 3", also on the phone's Day list as "Your three
   today"); ⋯ → Break it down into small steps (the item shows "Next: …"); ⋯ → Remind me on a date (hidden under
   "Waiting for a date" until then, then shown under ⏰ Reminders); Low items untouched for three weeks move to
